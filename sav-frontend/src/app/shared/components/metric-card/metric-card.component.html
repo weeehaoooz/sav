@@ -11,7 +11,7 @@
   <div class="value-row">
     @if (isCurrency()) {
       <span class="metric-value number-mono">
-        {{ config().value | currency:'SGD':'symbol':'1.0-0' }}
+        {{ config().value | currency:'SGD':'symbol':'1.2-2' }}
       </span>
     } @else {
       <span class="metric-value number-mono">{{ formattedValue() }}</span>

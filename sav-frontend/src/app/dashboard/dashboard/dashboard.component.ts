@@ -66,7 +66,7 @@ export class DashboardComponent {
     const byType = this.assetService.assetsByType();
     const data = Object.entries(byType).map(([type, assets]) => ({
       name: this.formatAssetType(type),
-      value: assets.reduce((s, a) => s + a.current_value, 0),
+      value: assets.reduce((s, a) => s + (Number(a.current_value) || 0), 0),
     }));
 
     return {

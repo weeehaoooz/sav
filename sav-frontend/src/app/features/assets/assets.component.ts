@@ -12,7 +12,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AgGridModule } from 'ag-grid-angular';
-import { ColDef, GridReadyEvent, GridApi, CellStyleModule } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, GridApi, CellStyleModule, CellValueChangedEvent } from 'ag-grid-community';
 import { ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule]);
@@ -56,10 +56,44 @@ export class AssetsComponent implements OnInit {
 
   private gridApi!: GridApi;
   readonly showForm = signal(false);
+  readonly isQuickEdit = signal(false);
   readonly selectedAssetForEdit = signal<Asset | null>(null);
   readonly saving = signal(false);
 
+  readonly displayAssets = computed(() => {
+    const assets = this.state.assets();
+    if (!this.isQuickEdit()) return assets;
+
+    const expanded: any[] = [];
+    for (const a of assets) {
+      expanded.push(a);
+      if (a.asset_type === 'cpf') {
+        const subAccounts = [
+          { type: 'cpf_oa', label: '↳ Ordinary Account (OA)', value: a.cpf_oa },
+          { type: 'cpf_sa', label: '↳ Special Account (SA)', value: a.cpf_sa },
+          { type: 'cpf_ma', label: '↳ MediSave Account (MA)', value: a.cpf_ma },
+          { type: 'cpf_ra', label: '↳ Retirement Account (RA)', value: a.cpf_ra }
+        ];
+
+        for (const sub of subAccounts) {
+          expanded.push({
+            ...a,
+            id: `${sub.type}_${a.id}`,
+            name: sub.label,
+            current_value: sub.value,
+            asset_type: 'cpf_sub',
+            isVirtualChild: true,
+            virtualParentId: a.id,
+            cpfSubAccountType: sub.type,
+          });
+        }
+      }
+    }
+    return expanded;
+  });
+
   readonly gridTheme = savGridTheme;
+  readonly getRowId = (params: any) => params.data.id.toString();
 
   readonly allAssetTypes: { value: AssetType; label: string }[] = [
     { value: 'bank', label: 'Bank Account' },
@@ -67,36 +101,50 @@ export class AssetsComponent implements OnInit {
     { value: 'cpf', label: 'CPF (Consolidated)' },
   ];
 
-  readonly colDefs: ColDef<Asset>[] = [
-    { field: 'name', headerName: 'Asset Name', flex: 2, minWidth: 160 },
+  readonly colDefs: ColDef<any>[] = [
+    {
+      field: 'name', headerName: 'Asset Name', flex: 2, minWidth: 160,
+      cellStyle: (p) => p.data?.isVirtualChild ? { paddingLeft: '32px', color: 'var(--text-secondary)' } : null
+    },
     {
       field: 'asset_type', headerName: 'Type', flex: 1,
-      valueFormatter: p => this.allAssetTypes.find(t => t.value === p.value)?.label ?? p.value,
+      valueFormatter: p => {
+        if (p.data?.isVirtualChild) return '';
+        return this.allAssetTypes.find(t => t.value === p.value)?.label ?? p.value;
+      },
       tooltipValueGetter: p => {
-        if (p.data?.asset_type === 'cpf') {
+        if (!p.data?.isVirtualChild && p.data?.asset_type === 'cpf') {
           return `OA: $${p.data.cpf_oa.toLocaleString()} | SA: $${p.data.cpf_sa.toLocaleString()} | MA: $${p.data.cpf_ma.toLocaleString()}${p.data.cpf_ra > 0 ? ' | RA: $' + p.data.cpf_ra.toLocaleString() : ''}`;
         }
         return '';
       }
     },
     {
-      field: 'current_value', headerName: 'Current Value', flex: 1, type: 'rightAligned',
-      valueFormatter: p => `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`,
+      field: 'current_value', headerName: 'Current Value', flex: 1.2, type: 'rightAligned',
+      editable: (p) => this.isQuickEdit() && (p.data?.asset_type !== 'cpf' || p.data?.isVirtualChild),
+      cellClass: (p) => this.isQuickEdit() && (p.data?.asset_type !== 'cpf' || p.data?.isVirtualChild) ? 'editable-cell' : '',
+      valueFormatter: p => p.data?.isVirtualChild ?
+        `(SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })})` :
+        `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`,
     },
     {
-      field: 'ytd_gain_loss', headerName: 'Gains and Loss (YTD)', flex: 1, type: 'rightAligned',
+      field: 'ytd_gain_loss', headerName: 'Gains and Loss (YTD)', flex: 1.2, type: 'rightAligned',
       tooltipValueGetter: () => 'Year-to-Date Change: Compares current value to the earliest entry of this year.',
       cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
       valueFormatter: p => {
+        if (p.data?.isVirtualChild) return '';
         const v = p.value ?? 0;
         const currency = p.data?.currency || 'SGD';
         return `${v >= 0 ? '+' : ''}${currency} ${Math.abs(v).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
       },
     },
     {
-      field: 'valuation_date', headerName: 'Latest Acquisition Date', flex: 1,
+      field: 'valuation_date', headerName: 'Valuation Date', flex: 1,
       sort: 'desc',
-      valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString() : '—',
+      valueFormatter: p => {
+        if (p.data?.isVirtualChild) return '';
+        return p.value ? new Date(p.value).toLocaleDateString() : '—';
+      },
     },
     {
       field: 'currency', headerName: 'Ccy', flex: 0.5,
@@ -104,13 +152,16 @@ export class AssetsComponent implements OnInit {
     },
     {
       headerName: 'Actions', flex: 1.2, sortable: false, filter: false,
-      cellRenderer: (p: any) => `
-        <div style="display:flex;gap:4px;align-items:center;height:100%">
+      cellRenderer: (p: any) => {
+        if (p.data?.isVirtualChild) return '';
+        return `<div style="display:flex;gap:4px;align-items:center;height:100%">
           <button id="history-${p.data.id}" style="background:rgba(52,211,153,0.12);border:none;color:#34d399;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">History</button>
           <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Update</button>
           <button id="del-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
-        </div>`,
+        </div>`;
+      },
       onCellClicked: (p) => {
+        if (p.data?.isVirtualChild) return;
         const target = p.event?.target as HTMLElement;
         if (target?.id?.startsWith('history-') && p.data) this.openHistory(p.data);
         if (target?.id?.startsWith('edit-') && p.data) this.openEdit(p.data);
@@ -170,6 +221,68 @@ export class AssetsComponent implements OnInit {
     this.gridApi = params.api;
   }
 
+  toggleQuickEdit(): void {
+    const active = !this.isQuickEdit();
+    this.isQuickEdit.set(active);
+    console.log('Quick Edit Toggled:', active);
+
+    if (this.gridApi) {
+      // Force refresh cells to update editable status and classes
+      // No need to set columns visible since we generate virtual rows for CPF now
+      this.gridApi.refreshCells({ force: true });
+    }
+  }
+
+  onCellValueChanged(params: CellValueChangedEvent): void {
+    console.log('Cell Value Changed:', params.colDef.field, params.oldValue, '->', params.newValue);
+    const { data, colDef, newValue } = params;
+    if (!colDef.field) return;
+
+    let valueToSend = newValue;
+    // ensure numeric for current values and virtual child amounts
+    if (colDef.field === 'current_value' || data.isVirtualChild) {
+      valueToSend = Number(newValue);
+      if (isNaN(valueToSend)) return;
+    }
+
+    // Intercept updates for dynamically generated CPF child rows
+    if (data.isVirtualChild) {
+      const parentId = data.virtualParentId;
+      const field = data.cpfSubAccountType; // this maps to cpf_oa, cpf_sa, etc.
+      const updateData = { [field]: valueToSend };
+
+      this.api.updateAsset(parentId, updateData).subscribe({
+        next: (updatedAsset) => {
+          console.log('CPF Sub-account updated successfully:', updatedAsset);
+          // Service update will trigger the `displayAssets` computation, refreshing our children rows
+          this.assetService.updateAsset(updatedAsset);
+          this.snackbar.open(`${data.name.replace('↳ ', '').trim()} updated`, 'Close', { duration: 2000 });
+        },
+        error: (err) => {
+          console.error('Failed to update CPF sub-account:', err);
+          this.snackbar.open('Failed to update CPF account', 'Close', { duration: 3000 });
+          this.assetService.loadAssets();
+        }
+      });
+      return;
+    }
+
+    const updateData = { [colDef.field]: valueToSend };
+
+    this.api.updateAsset(data.id, updateData).subscribe({
+      next: (updatedAsset) => {
+        console.log('Asset updated successfully:', updatedAsset);
+        this.assetService.updateAsset(updatedAsset);
+        this.snackbar.open('Asset updated', 'Close', { duration: 2000 });
+      },
+      error: (err) => {
+        console.error('Failed to update asset:', err);
+        this.snackbar.open('Failed to update asset', 'Close', { duration: 3000 });
+        this.assetService.loadAssets(); // Revert
+      }
+    });
+  }
+
   openCreate(): void {
     this.selectedAssetForEdit.set(null);
     this.showForm.set(true);
@@ -183,7 +296,7 @@ export class AssetsComponent implements OnInit {
   handleSave(formData: any): void {
     this.saving.set(true);
     const data = { ...formData };
-    
+
     // Format date for backend (YYYY-MM-DD)
     if (data.valuation_date) {
       const d = new Date(data.valuation_date);

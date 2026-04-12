@@ -25,9 +25,9 @@ export class MetricCardComponent {
   readonly formattedValue = computed(() => {
     const { value, format } = this.config();
     if (format === 'currency') return null; // handled by CurrencyPipe in template
-    if (format === 'percent') return `${value.toFixed(1)}%`;
-    if (format === 'months') return `${value.toFixed(1)} mo`;
-    return value.toLocaleString('en-SG', { maximumFractionDigits: 0 });
+    if (format === 'percent') return `${value.toFixed(0)}%`;
+    if (format === 'months') return `${value.toFixed(0)} mo`;
+    return value.toLocaleString('en-SG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   });
 
   readonly isCurrency = computed(() => this.config().format === 'currency');
@@ -35,7 +35,7 @@ export class MetricCardComponent {
   readonly trendLabel = computed(() => {
     const trend = this.config().trend;
     if (trend == null) return null;
-    return trend >= 0 ? `+${trend.toFixed(1)}%` : `${trend.toFixed(1)}%`;
+    return trend >= 0 ? `+${trend.toFixed(0)}%` : `${trend.toFixed(0)}%`;
   });
 
   readonly trendPositive = computed(() => (this.config().trend ?? 0) >= 0);

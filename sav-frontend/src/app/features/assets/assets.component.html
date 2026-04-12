@@ -1,27 +1,35 @@
 <div class="page-content fade-in">
-  <app-page-header title="Assets" subtitle="Manage your financial assets" actionLabel="Add Asset" actionIcon="add"
-    (actionClicked)="openCreate()" />
+  <div class="page-header-container">
+    <app-page-header title="Assets" subtitle="Manage your financial assets" actionLabel="Add Asset" actionIcon="add"
+      (actionClicked)="openCreate()" />
+  </div>
 
   <div class="metrics-grid" style="margin-bottom: 24px; display: flex; align-items: stretch;">
     @for (m of metrics(); track m.label) {
     <app-metric-card [config]="m" />
     }
   </div>
-
-  <div class="content-split" [class.form-open]="showForm()">
-    <!-- AG-Grid Table -->
-    <div class="table-wrapper glass">
-      <ag-grid-angular [theme]="gridTheme" [rowData]="state.assets()" [columnDefs]="colDefs"
-        [defaultColDef]="defaultColDef" [animateRows]="true" [rowHeight]="48" style="height: 520px; width: 100%;"
-        (gridReady)="onGridReady($event)" />
+  <div class="assets-container">
+    <div class="assets-toolbar">
+      <button mat-stroked-button [color]="isQuickEdit() ? 'primary' : ''" (click)="toggleQuickEdit()"
+        [matTooltip]="isQuickEdit() ? 'Disable quick editing' : 'Enable direct grid editing'">
+        <mat-icon>{{ isQuickEdit() ? 'edit_off' : 'bolt' }}</mat-icon>
+        {{ isQuickEdit() ? 'Exit Quick Edit' : 'Quick Edit' }}
+      </button>
     </div>
-
-    <!-- Inline Form Panel -->
-    @if (showForm()) {
-    <div class="form-panel glass fade-in">
-      <app-asset-form [asset]="selectedAssetForEdit()" [saving]="saving()" (save)="handleSave($event)"
-        (cancel)="cancelForm()" />
+    <div class="assets-grid" [class.form-open]="showForm()">
+      <div class="table-wrapper glass">
+        <ag-grid-angular [theme]="gridTheme" [rowData]="displayAssets()" [columnDefs]="colDefs"
+          [defaultColDef]="defaultColDef" [animateRows]="true" [rowHeight]="48" style="height: 520px; width: 100%;"
+          [undoRedoCellEditing]="true" (gridReady)="onGridReady($event)"
+          (cellValueChanged)="onCellValueChanged($event)" />
+      </div>
+      @if (showForm()) {
+      <div class="form-panel glass fade-in">
+        <app-asset-form [asset]="selectedAssetForEdit()" [saving]="saving()" (save)="handleSave($event)"
+          (cancel)="cancelForm()" />
+      </div>
+      }
     </div>
-    }
   </div>
 </div>

@@ -11,16 +11,30 @@
   margin-bottom: 24px;
 }
 
-.content-split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: $space-lg;
-  transition: grid-template-columns $transition-base;
+.assets-container {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
 
-  &.form-open {
-    grid-template-columns: 1fr 360px;
+  .assets-toolbar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .assets-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+    transition: grid-template-columns $transition-base;
+
+    &.form-open {
+      grid-template-columns: 1fr 360px;
+    }
   }
 }
+
+
+
 
 .table-wrapper {
   overflow: hidden;
@@ -66,4 +80,24 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 8px;
+}
+
+// AG Grid Editable Overrides
+:host ::v-deep {
+  .editable-cell {
+    background-color: rgba(99, 102, 241, 0.04) !important;
+    border-bottom: 2px dashed rgba(99, 102, 241, 0.2) !important;
+    cursor: cell;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(99, 102, 241, 0.08) !important;
+      border-bottom-color: rgba(99, 102, 241, 0.5) !important;
+    }
+
+    &.ag-cell-focus {
+      border-bottom-style: solid !important;
+      background-color: transparent !important;
+    }
+  }
 }
