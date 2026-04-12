@@ -1,4 +1,8 @@
 .claude/
+Claude.local.md
+graphify-out/
+claude_kg/
+
 
 # Dependency directories
 /node_modules
