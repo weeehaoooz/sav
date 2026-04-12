@@ -1,91 +1,80 @@
 <div class="page-content fade-in">
-  <app-page-header
-    title="Assets"
-    subtitle="Manage your financial assets"
-    actionLabel="Add Asset"
-    actionIcon="add"
+  <app-page-header title="Assets" subtitle="Manage your financial assets" actionLabel="Add Asset" actionIcon="add"
     (actionClicked)="openCreate()" />
 
   <div class="metrics-grid" style="margin-bottom: 24px;">
     @for (m of metrics(); track m.label) {
-      <app-metric-card [config]="m" />
+    <app-metric-card [config]="m" />
     }
   </div>
 
   <div class="content-split" [class.form-open]="showForm()">
     <!-- AG-Grid Table -->
     <div class="table-wrapper glass">
-      <ag-grid-angular
-        [theme]="gridTheme"
-        [rowData]="state.assets()"
-        [columnDefs]="colDefs"
-        [defaultColDef]="defaultColDef"
-        [animateRows]="true"
-        [rowHeight]="48"
-        style="height: 520px; width: 100%;"
+      <ag-grid-angular [theme]="gridTheme" [rowData]="state.assets()" [columnDefs]="colDefs"
+        [defaultColDef]="defaultColDef" [animateRows]="true" [rowHeight]="48" style="height: 520px; width: 100%;"
         (gridReady)="onGridReady($event)" />
     </div>
 
     <!-- Inline Form Panel -->
     @if (showForm()) {
-      <div class="form-panel glass fade-in">
-        <div class="form-header">
-          <h4>{{ editingId() ? 'Edit Asset' : 'New Asset' }}</h4>
-          <button mat-icon-button (click)="cancelForm()" id="close-asset-form-btn">
-            <mat-icon>close</mat-icon>
+    <div class="form-panel glass fade-in">
+      <div class="form-header">
+        <h4>{{ editingId() ? 'Edit Asset' : 'New Asset' }}</h4>
+        <button mat-icon-button (click)="cancelForm()" id="close-asset-form-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="assetForm" (ngSubmit)="save()" class="asset-form">
+        <mat-form-field appearance="fill">
+          <mat-label>Asset Name</mat-label>
+          <input matInput formControlName="name" placeholder="e.g. DBS Savings Account" id="asset-name-input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Asset Type</mat-label>
+          <mat-select formControlName="asset_type" id="asset-type-select">
+            @for (t of assetTypes; track t.value) {
+            <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Current Value (SGD)</mat-label>
+          <input matInput type="number" formControlName="current_value" id="asset-current-value-input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Acquisition Value (SGD)</mat-label>
+          <input matInput type="number" formControlName="acquisition_value" id="asset-acquisition-value-input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Annual Growth Rate (e.g. 0.07)</mat-label>
+          <input matInput type="number" step="0.01" formControlName="growth_rate" id="asset-growth-rate-input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Liquidity Score (1–10)</mat-label>
+          <input matInput type="number" min="1" max="10" formControlName="liquidity_score" id="asset-liquidity-input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Notes</mat-label>
+          <textarea matInput formControlName="notes" rows="2" id="asset-notes-input"></textarea>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button mat-button type="button" (click)="cancelForm()" id="asset-cancel-btn">Cancel</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="assetForm.invalid || saving()"
+            id="asset-save-btn">
+            {{ saving() ? 'Saving…' : (editingId() ? 'Update' : 'Add Asset') }}
           </button>
         </div>
-
-        <form [formGroup]="assetForm" (ngSubmit)="save()" class="asset-form">
-          <mat-form-field appearance="fill">
-            <mat-label>Asset Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. DBS Savings Account" id="asset-name-input" />
-          </mat-form-field>
-
-          <mat-form-field appearance="fill">
-            <mat-label>Asset Type</mat-label>
-            <mat-select formControlName="asset_type" id="asset-type-select">
-              @for (t of assetTypes; track t.value) {
-                <mat-option [value]="t.value">{{ t.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="fill">
-            <mat-label>Current Value (SGD)</mat-label>
-            <input matInput type="number" formControlName="current_value" id="asset-current-value-input" />
-          </mat-form-field>
-
-          <mat-form-field appearance="fill">
-            <mat-label>Acquisition Value (SGD)</mat-label>
-            <input matInput type="number" formControlName="acquisition_value" id="asset-acquisition-value-input" />
-          </mat-form-field>
-
-          <mat-form-field appearance="fill">
-            <mat-label>Annual Growth Rate (e.g. 0.07)</mat-label>
-            <input matInput type="number" step="0.01" formControlName="growth_rate" id="asset-growth-rate-input" />
-          </mat-form-field>
-
-          <mat-form-field appearance="fill">
-            <mat-label>Liquidity Score (1–10)</mat-label>
-            <input matInput type="number" min="1" max="10" formControlName="liquidity_score" id="asset-liquidity-input" />
-          </mat-form-field>
-
-          <mat-form-field appearance="fill">
-            <mat-label>Notes</mat-label>
-            <textarea matInput formControlName="notes" rows="2" id="asset-notes-input"></textarea>
-          </mat-form-field>
-
-          <div class="form-actions">
-            <button mat-button type="button" (click)="cancelForm()" id="asset-cancel-btn">Cancel</button>
-            <button mat-raised-button color="primary" type="submit"
-                    [disabled]="assetForm.invalid || saving()"
-                    id="asset-save-btn">
-              {{ saving() ? 'Saving…' : (editingId() ? 'Update' : 'Add Asset') }}
-            </button>
-          </div>
-        </form>
-      </div>
+      </form>
+    </div>
     }
   </div>
 </div>

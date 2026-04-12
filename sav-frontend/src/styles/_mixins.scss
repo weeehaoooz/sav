@@ -73,6 +73,6 @@
 
 @mixin responsive-grid($min: 280px) {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax($min, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax($min, 1fr));
   gap: $space-md;
 }
