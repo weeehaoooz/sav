@@ -1,0 +1,66 @@
+<div class="tab-pane fade-in">
+  <div class="pane-header">
+    <h2>General Information</h2>
+    <p class="text-muted">Update your account details here.</p>
+  </div>
+  
+  <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="settings-form">
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Username</mat-label>
+        <input matInput formControlName="username">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Email Address</mat-label>
+        <input matInput formControlName="email">
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="first_name">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="last_name">
+      </mat-form-field>
+    </div>
+    <div class="form-actions">
+      <button mat-raised-button color="primary" type="submit" [disabled]="loadingProfile()">
+        Save Changes
+      </button>
+    </div>
+  </form>
+
+  <mat-divider class="divider my-4"></mat-divider>
+
+  <div class="pane-header mt-4">
+    <h2>Active Profile Selection</h2>
+    <p class="text-muted">Switch between your family's accounts to view their financial data.</p>
+  </div>
+  <div class="account-list">
+    @for (acc of userService.accounts(); track acc.id) {
+      <div class="account-item" [class.active]="userService.selectedAccount()?.id === acc.id"
+        (click)="onAccountSwitch(acc.id)">
+        <div class="avatar" [style.background-color]="acc.avatar_color">
+          {{ acc.display_name.charAt(0) }}
+        </div>
+        <div class="details">
+          <span class="name">{{ acc.display_name }}</span>
+          <span class="type">{{ acc.account_type }} — {{ acc.role }}</span>
+        </div>
+        @if (userService.selectedAccount()?.id === acc.id) {
+          <mat-icon class="check">check_circle</mat-icon>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Messages Output -->
+  @if (message()) {
+    <div class="toast" [class]="message()?.type">
+      <mat-icon>{{ message()?.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+      <span>{{ message()?.text }}</span>
+    </div>
+  }
+</div>

@@ -1,0 +1,33 @@
+<div class="metric-card glass-hover fade-in" [style.--accent]="config().accentColor || '#6366f1'">
+  <div class="card-header">
+    <div class="label">{{ config().label }}</div>
+    @if (config().icon) {
+      <div class="icon-wrapper">
+        <mat-icon>{{ config().icon }}</mat-icon>
+      </div>
+    }
+  </div>
+
+  <div class="value-row">
+    @if (isCurrency()) {
+      <span class="metric-value number-mono">
+        {{ config().value | currency:'SGD':'symbol':'1.0-0' }}
+      </span>
+    } @else {
+      <span class="metric-value number-mono">{{ formattedValue() }}</span>
+    }
+
+    @if (trendLabel()) {
+      <span class="trend" [class.positive]="trendPositive()" [class.negative]="!trendPositive()">
+        <mat-icon>{{ trendPositive() ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+        {{ trendLabel() }}
+      </span>
+    }
+  </div>
+
+  @if (config().subtitle) {
+    <div class="subtitle">{{ config().subtitle }}</div>
+  }
+
+  <div class="accent-bar"></div>
+</div>

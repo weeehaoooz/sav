@@ -1,0 +1,310 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+// ─── Timing functions ───────────────────────────────────────────────────────
+$ease-sidebar: cubic-bezier(0.4, 0, 0.2, 1);
+$duration-sidebar: 280ms;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+// ─── Root sidebar ───────────────────────────────────────────────────────────
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: $sidebar-width;
+  height: 100%;
+  background: $bg-secondary;
+  border-right: 1px solid $border-subtle;
+  overflow-x: hidden;
+  overflow-y: visible; // allow tooltips to escape
+  z-index: 100;
+
+  // Single transition on width only — everything inside transitions individually
+  transition: width $duration-sidebar $ease-sidebar;
+
+  &.collapsed {
+    width: 68px;
+  }
+}
+
+// ─── Brand / header ─────────────────────────────────────────────────────────
+.sidebar-brand {
+  height: $topbar-height;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 12px;
+  border-bottom: 1px solid $border-subtle;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: padding $duration-sidebar $ease-sidebar;
+
+  .sidebar.collapsed & {
+    padding: 0 16px;
+  }
+}
+
+// Logo component is used here
+
+// ─── Collapse toggle ─────────────────────────────────────────────────────────
+.collapse-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: $text-muted;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background $transition-fast,
+    color $transition-fast,
+    border-color $transition-fast,
+    opacity $duration-sidebar $ease-sidebar;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    transition: transform ($duration-sidebar * 0.8) $ease-sidebar;
+  }
+
+  &:hover {
+    background: $bg-card-hover;
+    color: $text-primary;
+    border-color: $border-subtle;
+  }
+
+  // Hide when collapsed — toggle is still accessible via the icon click
+  .sidebar.collapsed & {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+}
+
+// ─── Nav container ───────────────────────────────────────────────────────────
+.nav-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: visible; // tooltips
+  padding: 8px 0;
+  @include scrollbar-dark;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0 6px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-divider {
+  height: 1px;
+  background: $border-subtle;
+  margin: 12px 14px;
+  flex-shrink: 0;
+  transition:
+    opacity $duration-sidebar $ease-sidebar,
+    margin $duration-sidebar $ease-sidebar;
+
+  .sidebar.collapsed & {
+    margin-inline: 10px;
+    opacity: 0.6;
+  }
+}
+
+// ─── Nav item ────────────────────────────────────────────────────────────────
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  color: $text-secondary;
+  text-decoration: none;
+  border-radius: $radius-md;
+  transition:
+    background $transition-fast,
+    color $transition-fast,
+    padding $duration-sidebar $ease-sidebar,
+    gap $duration-sidebar $ease-sidebar;
+  margin-bottom: 2px;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    background: $bg-card-hover;
+    color: $text-primary;
+
+    .nav-icon {
+      color: $text-primary;
+    }
+  }
+
+  &.active {
+    background: rgba($accent-indigo, 0.1);
+    color: $accent-indigo-light;
+    font-weight: $font-weight-semibold;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 18%;
+      bottom: 18%;
+      width: 3px;
+      background: $accent-indigo;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .nav-icon {
+      color: $accent-indigo-light;
+    }
+  }
+
+  // Collapsed: center the icon smoothly via padding instead of justify-content
+  .sidebar.collapsed & {
+    padding: 10px 14px;
+    margin-inline: 4px;
+    gap: 0;
+  }
+}
+
+.nav-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  color: $text-muted;
+  transition: color $transition-fast;
+}
+
+.nav-label {
+  font-size: $font-size-sm;
+  white-space: nowrap;
+  overflow: hidden;
+
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity ($duration-sidebar * 0.55) $ease-sidebar,
+    transform ($duration-sidebar * 0.55) $ease-sidebar,
+    max-width $duration-sidebar $ease-sidebar;
+  max-width: 160px;
+
+  .sidebar.collapsed & {
+    opacity: 0;
+    transform: translateX(-4px);
+    max-width: 0;
+    pointer-events: none;
+  }
+}
+
+// ─── Footer ──────────────────────────────────────────────────────────────────
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid $border-subtle;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.version-chip {
+  background: rgba(255, 255, 255, 0.03);
+  color: $text-muted;
+  padding: 3px 10px;
+  border-radius: $radius-full;
+  font-size: 10px;
+  border: 1px solid $border-subtle;
+  white-space: nowrap;
+  overflow: hidden;
+
+  opacity: 1;
+  max-width: 120px;
+  transition:
+    opacity ($duration-sidebar * 0.5) $ease-sidebar,
+    max-width $duration-sidebar $ease-sidebar;
+
+  .sidebar.collapsed & {
+    opacity: 0;
+    max-width: 0;
+    padding-inline: 0;
+  }
+}
+
+// Handled by LogoComponent
+
+// ─── Tooltip overrides (Angular CDK) ─────────────────────────────────────────
+// Ensure tooltips render above everything
+::ng-deep .sidebar-tooltip .mdc-tooltip__surface {
+  background: $bg-card !important;
+  color: $text-primary !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border: 1px solid $border-subtle !important;
+  border-radius: $radius-sm !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  padding: 5px 10px !important;
+  letter-spacing: 0.01em !important;
+}
+
+// ─── Responsive ──────────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 250px !important;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform $duration-sidebar $ease-sidebar;
+    box-shadow: $shadow-lg;
+  }
+
+  .sidebar.active-mobile {
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(0);
+
+    .collapse-btn {
+      opacity: 1;
+      pointer-events: auto;
+      position: static;
+    }
+
+    .nav-item {
+      justify-content: flex-start;
+      padding: 10px 12px;
+      margin-inline: 0;
+      gap: 10px;
+    }
+
+    .nav-label {
+      opacity: 1;
+      max-width: 160px;
+      transform: none;
+    }
+
+    // Logo name handled via state binding
+
+    .version-chip {
+      opacity: 1;
+      max-width: 120px;
+    }
+  }
+}

@@ -1,0 +1,64 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <!-- Removed breadcrumb per design request -->
+  </div>
+  <div class="topbar-right">
+    <div class="net-worth-chip glass">
+      <span class="nw-label">Net Worth</span>
+      <span class="nw-value number-mono">
+        {{ state.netWorth() | currency:'SGD':'symbol':'1.0-0' }}
+      </span>
+    </div>
+
+    <div class="user-menu-container">
+      <button class="user-trigger" (click)="toggleMenu($event)">
+        <div class="user-avatar" [style.background-color]="userService.selectedAccount()?.avatar_color || '#6366f1'">
+          {{ (userService.selectedAccount()?.display_name || auth.currentUser()?.username)?.charAt(0) | uppercase }}
+        </div>
+      </button>
+
+      <div class="user-menu-dropdown glass-strong" *ngIf="isMenuOpen()">
+        <div class="menu-header">
+          <div class="header-info">
+            <span class="header-label">Signed in as</span>
+            <span class="user-name">{{ auth.currentUser()?.username }}</span>
+          </div>
+        </div>
+
+        <div class="menu-content">
+          <div class="section-label">Switch Profile</div>
+          <div class="accounts-grid">
+            @for (account of userService.accounts(); track account.id) {
+            <button class="menu-item" (click)="selectAccount(account)"
+              [class.active-account]="userService.selectedAccount()?.id === account.id">
+              <div class="account-row">
+                <div class="account-avatar" [style.background-color]="account.avatar_color">
+                  {{ account.display_name.charAt(0) }}
+                </div>
+                <div class="account-details">
+                  <span class="account-name">{{ account.display_name }}</span>
+                  <span class="account-type">{{ account.account_type | titlecase }}</span>
+                </div>
+                @if (userService.selectedAccount()?.id === account.id) {
+                <i class="material-icons active-indicator">check_circle</i>
+                }
+              </div>
+            </button>
+            }
+          </div>
+
+          <div class="menu-actions">
+            <button class="menu-item link-item" routerLink="/profile" (click)="isMenuOpen.set(false)">
+              <i class="material-icons">settings</i>
+              <span>Account Settings</span>
+            </button>
+            <button class="menu-item logout-btn" (click)="logout()">
+              <i class="material-icons">logout</i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

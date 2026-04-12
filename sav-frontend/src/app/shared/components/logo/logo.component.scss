@@ -1,0 +1,64 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+$ease-sidebar: cubic-bezier(0.4, 0, 0.2, 1);
+$duration-sidebar: 280ms;
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: $text-primary;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-xl;
+  min-width: 0;
+  transition: gap $duration-sidebar $ease-sidebar;
+
+  &.collapsed {
+    gap: 0;
+
+    .brand-icon {
+      transform: scale(0.92);
+      cursor: pointer;
+    }
+
+    .brand-name {
+      opacity: 0;
+      transform: translateX(-6px);
+      max-width: 0;
+      pointer-events: none;
+    }
+  }
+}
+
+.brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, $accent-indigo, $accent-indigo-dark);
+  border-radius: $radius-md;
+  color: white;
+  font-size: 20px;
+  box-shadow: $shadow-glow-indigo;
+  transition: transform $duration-sidebar $ease-sidebar;
+}
+
+.brand-name {
+  font-family: 'Inter Tight', sans-serif;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+
+  // Fade + slide out when collapsing
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity ($duration-sidebar * 0.6) $ease-sidebar,
+    transform ($duration-sidebar * 0.6) $ease-sidebar,
+    width $duration-sidebar $ease-sidebar,
+    max-width $duration-sidebar $ease-sidebar;
+  max-width: 120px;
+}

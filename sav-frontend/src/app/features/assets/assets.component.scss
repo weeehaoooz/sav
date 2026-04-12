@@ -1,0 +1,53 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+:host { display: block; }
+
+.content-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-lg;
+  transition: grid-template-columns $transition-base;
+
+  &.form-open {
+    grid-template-columns: 1fr 360px;
+  }
+}
+
+.table-wrapper {
+  overflow: hidden;
+  min-height: 520px;
+}
+
+.form-panel {
+  padding: $space-lg;
+  height: fit-content;
+}
+
+.form-header {
+  @include flex-between;
+  margin-bottom: $space-md;
+
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+  }
+}
+
+.asset-form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: $space-sm;
+  justify-content: flex-end;
+  margin-top: $space-sm;
+}

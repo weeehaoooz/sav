@@ -1,0 +1,40 @@
+<nav class="sidebar" [class.collapsed]="collapsed()">
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <app-logo 
+      [collapsed]="collapsed()" 
+      (logoClick)="collapsed() && toggleCollapse()">
+    </app-logo>
+    <button class="collapse-btn" (click)="toggleCollapse()" id="sidebar-toggle-btn" [matTooltip]="'Expand sidebar'"
+      matTooltipPosition="right" matTooltipClass="sidebar-tooltip" [matTooltipDisabled]="true">
+      <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-container">
+    <ul class="nav-list">
+      @for (item of navItems; track item.path) {
+      @if (item.hasDivider) {
+      <li class="nav-divider"></li>
+      }
+      <li>
+        <a class="nav-item" [routerLink]="item.path" routerLinkActive="active" matRipple
+          matRippleColor="rgba(99,102,241,0.1)" [id]="'nav-' + item.path.replace('/', '')" [matTooltip]="item.label"
+          matTooltipPosition="right" matTooltipClass="sidebar-tooltip" [matTooltipDisabled]="!collapsed()"
+          [matTooltipShowDelay]="200">
+          <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </li>
+      }
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <div class="sidebar-footer">
+    <div class="version-chip">v1.0 · MVP</div>
+  </div>
+
+</nav>

@@ -1,0 +1,38 @@
+<div class="page-content fade-in">
+  <app-page-header title="Income" subtitle="All your income streams" actionLabel="Add Income" actionIcon="add" (actionClicked)="openCreate()" />
+  <div class="metrics-grid" style="margin-bottom:24px;">
+    @for (m of metrics(); track m.label) { <app-metric-card [config]="m" /> }
+  </div>
+  <div class="content-split" [class.form-open]="showForm()">
+    <div class="table-wrapper glass">
+      <ag-grid-angular [theme]="gridTheme" [rowData]="state.income()" [columnDefs]="colDefs" [defaultColDef]="defaultColDef" [animateRows]="true" style="height:480px;width:100%;" />
+    </div>
+    @if (showForm()) {
+      <div class="form-panel glass fade-in">
+        <div class="form-header">
+          <h4>{{ editingId() ? 'Edit Income' : 'New Income' }}</h4>
+          <button mat-icon-button (click)="cancelForm()"><mat-icon>close</mat-icon></button>
+        </div>
+        <form [formGroup]="incomeForm" (ngSubmit)="save()" class="income-form">
+          <mat-form-field appearance="fill"><mat-label>Name</mat-label><input matInput formControlName="name" id="income-name-input" /></mat-form-field>
+          <mat-form-field appearance="fill"><mat-label>Type</mat-label>
+            <mat-select formControlName="income_type" id="income-type-select">
+              @for (t of incomeTypes; track t.value) { <mat-option [value]="t.value">{{ t.label }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="fill"><mat-label>Amount (SGD)</mat-label><input matInput type="number" formControlName="amount" id="income-amount-input" /></mat-form-field>
+          <mat-form-field appearance="fill"><mat-label>Frequency</mat-label>
+            <mat-select formControlName="frequency" id="income-freq-select">
+              @for (f of frequencies; track f.value) { <mat-option [value]="f.value">{{ f.label }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="fill"><mat-label>Annual Growth Rate (e.g. 0.03)</mat-label><input matInput type="number" step="0.01" formControlName="growth_rate" id="income-growth-input" /></mat-form-field>
+          <div class="form-actions">
+            <button mat-button type="button" (click)="cancelForm()">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="saving()" id="income-save-btn">{{ saving() ? 'Saving…' : (editingId() ? 'Update' : 'Add') }}</button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,104 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.metric-card {
+  padding: $space-lg;
+  position: relative;
+  cursor: default;
+  overflow: hidden;
+}
+
+.card-header {
+  @include flex-between;
+  margin-bottom: $space-md;
+}
+
+.label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $text-muted;
+}
+
+.icon-wrapper {
+  @include flex-center;
+  width: 36px;
+  height: 36px;
+  border-radius: $radius-sm;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent, #{$accent-indigo});
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--accent, #{$accent-indigo});
+  }
+}
+
+.value-row {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-sm;
+  margin-bottom: $space-xs;
+}
+
+.metric-value {
+  font-size: clamp(1.4rem, 2.5vw, 1.875rem);
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  margin-bottom: 2px;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+
+  &.positive {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.1);
+  }
+  &.negative {
+    color: #fb7185;
+    background: rgba(244, 63, 94, 0.1);
+  }
+}
+
+.subtitle {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-top: $space-xs;
+}
+
+.accent-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent, #{$accent-indigo}), transparent);
+  opacity: 0;
+  transition: opacity $transition-base;
+}
+
+.metric-card:hover .accent-bar {
+  opacity: 1;
+}

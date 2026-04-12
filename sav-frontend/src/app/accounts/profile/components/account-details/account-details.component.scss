@@ -1,0 +1,132 @@
+@use '../../../../../styles/variables' as *;
+
+.pane-header {
+  margin-bottom: $space-lg;
+
+  h2 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $space-xs;
+    color: $text-primary;
+  }
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-md;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: $space-sm;
+  }
+}
+
+.account-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $space-md;
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md;
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    background: $bg-card-hover;
+    border-color: $border-medium;
+  }
+
+  &.active {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: $accent-indigo;
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: $font-weight-bold;
+    color: white;
+    font-size: $font-size-lg;
+  }
+
+  .details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .name {
+      color: $text-primary;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-base;
+    }
+
+    .type {
+      color: $text-muted;
+      font-size: $font-size-xs;
+      text-transform: capitalize;
+    }
+  }
+
+  .check {
+    color: $color-positive;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease-out;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  background: var(--bg-card);
+
+  &.success {
+    color: var(--color-positive);
+    border: 1px solid var(--color-positive);
+  }
+
+  &.error {
+    color: var(--color-negative);
+    border: 1px solid var(--color-negative);
+  }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.mt-4 { margin-top: $space-lg; }
+.my-4 { margin: $space-lg 0; }

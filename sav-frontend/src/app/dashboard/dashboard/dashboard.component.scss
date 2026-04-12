@@ -1,0 +1,42 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+:host { display: block; }
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  padding: $space-lg $space-xl;
+  gap: 0;
+}
+
+.summary-item {
+  flex: 1;
+  text-align: center;
+
+  .label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $text-muted;
+    margin-bottom: $space-xs;
+  }
+}
+
+.summary-value {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+
+  &.positive { color: $color-positive; }
+  &.negative { color: $color-negative; }
+}
+
+.summary-divider {
+  width: 1px;
+  height: 40px;
+  background: $border-subtle;
+  flex-shrink: 0;
+}

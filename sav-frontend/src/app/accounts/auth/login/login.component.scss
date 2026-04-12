@@ -1,0 +1,178 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Login Component — all colours via CSS custom properties
+// ─────────────────────────────────────────────────────────────────────────────
+
+.login-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 80% 10%, var(--accent-indigo-glow, rgba(99, 102, 241, 0.12)) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 85%, var(--accent-purple-glow, rgba(168, 85, 247, 0.1)) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, var(--accent-cyan-glow, rgba(6, 182, 212, 0.05)) 0%, transparent 70%),
+    var(--bg-root);
+  overflow: hidden;
+  position: relative;
+}
+
+.theme-toggle-wrapper {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  z-index: 100;
+}
+
+// ── Card ─────────────────────────────────────────────────────────────────────
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 2.75rem 2.5rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  animation: loginFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-medium);
+  box-shadow:
+    0 0 0 1px var(--border-subtle),
+    0 24px 64px var(--shadow-color, rgba(0, 0, 0, 0.45)),
+    0 0 80px rgba(99, 102, 241, 0.07);
+}
+
+:host-context(body.light-theme) {
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --accent-indigo-glow: rgba(99, 102, 241, 0.06);
+  --accent-purple-glow: rgba(168, 85, 247, 0.04);
+  --accent-cyan-glow: rgba(6, 182, 212, 0.03);
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+.login-header {
+  margin-bottom: 2.25rem;
+
+  .login-logo {
+    display: inline-block;
+    margin-bottom: 2rem;
+    transform: scale(1.15); // Slightly larger for the login page
+  }
+
+  h1 {
+    font-size: 1.875rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+}
+
+// ── Form ─────────────────────────────────────────────────────────────────────
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  text-align: left;
+
+  mat-form-field {
+    width: 100%;
+
+    // Taller input matching --input-height token
+    .mat-mdc-text-field-wrapper {
+      height: var(--input-height, 52px);
+    }
+  }
+}
+
+// ── Error message ─────────────────────────────────────────────────────────────
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: rgba(244, 63, 94, 0.09);
+  border: 1px solid rgba(244, 63, 94, 0.22);
+  color: var(--accent-rose);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  animation: loginFadeUp 0.25s ease both;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+// ── Submit button ─────────────────────────────────────────────────────────────
+.submit-btn {
+  height: var(--input-height, 52px);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: var(--input-radius, 10px) !important;
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-indigo), var(--accent-indigo-dark)) !important;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.32) !important;
+  transition: box-shadow 200ms ease, transform 150ms ease, opacity 150ms ease !important;
+  letter-spacing: 0.01em;
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.44) !important;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    box-shadow: none !important;
+  }
+
+  border: none;
+
+  mat-spinner {
+    margin: 0 auto;
+  }
+}
+
+
+
+// ── Register link ─────────────────────────────────────────────────────────────
+.register-link {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+
+  a {
+    color: var(--accent-indigo);
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// ── Animation ─────────────────────────────────────────────────────────────────
+@keyframes loginFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

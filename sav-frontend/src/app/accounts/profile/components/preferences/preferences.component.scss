@@ -1,0 +1,113 @@
+@use '../../../../../styles/variables' as *;
+
+.pane-header {
+  margin-bottom: $space-lg;
+
+  h2 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $space-xs;
+    color: $text-primary;
+  }
+}
+
+.preference-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.preference-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-md;
+
+  &.vertical {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pref-info {
+    h3 {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+      margin-bottom: $space-xs;
+    }
+    p {
+      color: $text-secondary;
+      font-size: $font-size-sm;
+      margin: 0;
+    }
+  }
+}
+
+.theme-selector {
+  display: flex;
+  gap: $space-md;
+  width: 100%;
+  margin-top: $space-md;
+
+  @media (max-width: 600px) {
+    flex-wrap: wrap;
+  }
+}
+
+.theme-card {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-md;
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all $transition-fast;
+  color: $text-secondary;
+  outline: none;
+
+  &:hover {
+    background: $bg-card-hover;
+    border-color: $border-medium;
+    transform: translateY(-2px);
+    color: $text-primary;
+  }
+
+  &.active {
+    background: rgba($accent-indigo, 0.1);
+    border-color: $accent-indigo;
+    color: $accent-indigo-light;
+    box-shadow: $shadow-glow-indigo;
+
+    .theme-card-icon {
+      background: $accent-indigo;
+      color: white;
+    }
+  }
+
+  .theme-card-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: $radius-sm;
+    transition: all $transition-fast;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
+}

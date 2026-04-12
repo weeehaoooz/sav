@@ -1,0 +1,7 @@
+Django>=4.2,<5.0
+djangorestframework>=3.14
+django-cors-headers>=4.3
+djangorestframework-simplejwt>=5.3.1
+dj-rest-auth>=5.0.1
+django-allauth>=0.59.0
+PyJWT>=2.8.0

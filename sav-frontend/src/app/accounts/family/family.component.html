@@ -1,0 +1,108 @@
+<div class="page-content fade-in">
+  <app-page-header title="Family Members" subtitle="Manage accounts, children, and sharing access" actionLabel="Add Member" actionIcon="person_add" (actionClicked)="openCreate()" />
+
+  <div class="family-layout" [class.form-open]="showForm()">
+    <!-- Profiles Grid -->
+    <div class="profiles-grid">
+      @for (acc of userService.accounts(); track acc.id) {
+        <div class="profile-card glass-hover fade-in">
+          <div class="profile-header">
+            <div class="avatar" [style.backgroundColor]="acc.avatar_color">
+              {{ getInitials(acc.display_name) }}
+            </div>
+            <div class="profile-actions">
+              <button mat-icon-button (click)="openEdit(acc)" class="action-btn edit-btn"><mat-icon>edit</mat-icon></button>
+              @if (acc.account_type !== 'primary') {
+                <button mat-icon-button (click)="deleteAccount(acc.id)" class="action-btn del-btn"><mat-icon>delete</mat-icon></button>
+              }
+            </div>
+          </div>
+          
+          <div class="profile-info">
+            <h3>{{ acc.display_name }}</h3>
+            <div class="tags">
+              <span class="badge badge-indigo">{{ acc.account_type.replace('_', ' ') }}</span>
+              <span class="badge badge-amber">{{ acc.role.replace('_', ' ') }}</span>
+            </div>
+          </div>
+
+          <div class="profile-stats">
+            @if (acc.age !== null) {
+              <div class="stat">
+                <span class="stat-label">Age</span>
+                <span class="stat-val">{{ acc.age }}</span>
+              </div>
+            }
+            <div class="stat">
+              <span class="stat-label">Assets Owned</span>
+              <span class="stat-val">—</span>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        @if (!state.loading()) {
+          <div class="empty-state glass">No accounts found.</div>
+        }
+      }
+    </div>
+
+    <!-- Form Panel -->
+    @if (showForm()) {
+      <div class="form-panel glass fade-in">
+        <div class="form-header">
+          <h4>{{ editingId() ? 'Edit Member' : 'Add Family Member' }}</h4>
+          <button mat-icon-button (click)="cancelForm()"><mat-icon>close</mat-icon></button>
+        </div>
+
+        <form [formGroup]="accountForm" (ngSubmit)="save()" class="member-form">
+          <mat-form-field appearance="fill">
+            <mat-label>Display Name</mat-label>
+            <input matInput formControlName="display_name" placeholder="e.g. Alice" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Account Type</mat-label>
+            <mat-select formControlName="account_type">
+              @for (t of accountTypes; track t.value) { <mat-option [value]="t.value">{{ t.label }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Role / Access Level</mat-label>
+            <mat-select formControlName="role">
+              @for (r of accountRoles; track r.value) { <mat-option [value]="r.value">{{ r.label }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Date of Birth</mat-label>
+            <input matInput type="date" formControlName="date_of_birth" />
+          </mat-form-field>
+
+          <div class="color-picker-field">
+            <label class="color-label">Avatar Color</label>
+            <div class="color-options">
+              @for (c of avatarColors; track c) {
+                <button type="button" class="color-dot" 
+                        [style.backgroundColor]="c"
+                        [class.selected]="accountForm.get('avatar_color')?.value === c"
+                        (click)="accountForm.patchValue({avatar_color: c})">
+                  @if (accountForm.get('avatar_color')?.value === c) {
+                    <mat-icon>check</mat-icon>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button mat-button type="button" (click)="cancelForm()">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="accountForm.invalid || saving()">
+              {{ saving() ? 'Saving…' : (editingId() ? 'Update' : 'Add Member') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</div>

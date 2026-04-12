@@ -1,0 +1,45 @@
+<div class="profile-container page-content fade-in">
+  <div class="page-header">
+    <h1>Settings</h1>
+    <p class="text-muted">Manage your profile, security, and app preferences.</p>
+  </div>
+
+  <div class="settings-layout">
+    <!-- Side Navigation -->
+    <aside class="settings-sidebar glass">
+      <nav class="settings-nav">
+        <button class="nav-item" [class.active]="activeTab() === 'account'" (click)="setTab('account')">
+          <mat-icon>person</mat-icon>
+          <span>Account Profile</span>
+        </button>
+        <button class="nav-item" [class.active]="activeTab() === 'security'" (click)="setTab('security')">
+          <mat-icon>security</mat-icon>
+          <span>Security</span>
+        </button>
+        <button class="nav-item" [class.active]="activeTab() === 'preferences'" (click)="setTab('preferences')">
+          <mat-icon>settings</mat-icon>
+          <span>Preferences</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="settings-content glass">
+      
+      <!-- Account Profile Tab -->
+      @if (activeTab() === 'account') {
+        <app-account-details></app-account-details>
+      }
+
+      <!-- Security Tab -->
+      @if (activeTab() === 'security') {
+        <app-security></app-security>
+      }
+
+      <!-- Preferences Tab -->
+      @if (activeTab() === 'preferences') {
+        <app-preferences></app-preferences>
+      }
+    </main>
+  </div>
+</div>

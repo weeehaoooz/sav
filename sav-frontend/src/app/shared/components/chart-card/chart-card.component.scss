@@ -1,0 +1,39 @@
+@use '../../../../styles/variables' as *;
+
+:host { display: block; }
+
+.chart-card {
+  padding: $space-lg;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $space-md;
+}
+
+.card-title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  margin-bottom: 2px;
+}
+
+.card-subtitle {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.chart-wrapper {
+  position: relative;
+}
+
+.chart {
+  width: 100%;
+}
+
+.chart-loading {
+  width: 100%;
+  height: 100%;
+}

@@ -1,0 +1,14 @@
+<div class="page-header">
+  <div class="header-text">
+    <h2 class="page-title">{{ title() }}</h2>
+    @if (subtitle()) {
+      <p class="page-subtitle">{{ subtitle() }}</p>
+    }
+  </div>
+  @if (actionLabel()) {
+    <button mat-raised-button color="primary" id="page-header-action-btn" (click)="onAction()">
+      <mat-icon>{{ actionIcon() }}</mat-icon>
+      {{ actionLabel() }}
+    </button>
+  }
+</div>

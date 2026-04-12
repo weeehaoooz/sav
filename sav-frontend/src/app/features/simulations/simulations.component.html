@@ -1,0 +1,77 @@
+<div class="page-content fade-in">
+  <app-page-header title="Retirement Simulation" subtitle="Project your financial future with scenario analysis" />
+
+  <div class="sim-layout">
+    <!-- Params panel -->
+    <div class="params-panel glass">
+      <h4 class="panel-title">Scenario Parameters</h4>
+
+      <form [formGroup]="params" (ngSubmit)="runSimulation()" class="params-form">
+        <div class="param-row">
+          <mat-form-field appearance="fill">
+            <mat-label>Current Age</mat-label>
+            <input matInput type="number" formControlName="current_age" id="sim-current-age" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Retirement Age</mat-label>
+            <input matInput type="number" formControlName="retirement_age" id="sim-retirement-age" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Current Net Worth (SGD)</mat-label>
+          <input matInput type="number" formControlName="current_net_worth" id="sim-net-worth" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Monthly Savings (SGD)</mat-label>
+          <input matInput type="number" formControlName="monthly_savings" id="sim-monthly-savings" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Annual Return (e.g. 0.07 = 7%)</mat-label>
+          <input matInput type="number" step="0.01" formControlName="annual_return" id="sim-annual-return" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Inflation Rate (e.g. 0.025)</mat-label>
+          <input matInput type="number" step="0.005" formControlName="inflation_rate" id="sim-inflation" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Annual Expenses in Retirement (SGD)</mat-label>
+          <input matInput type="number" formControlName="annual_expenses" id="sim-annual-expenses" />
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit"
+                [disabled]="params.invalid || running()"
+                id="run-simulation-btn"
+                class="run-btn">
+          <mat-icon>{{ running() ? 'hourglass_empty' : 'play_arrow' }}</mat-icon>
+          {{ running() ? 'Running…' : 'Run Simulation' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Results -->
+    <div class="results-area">
+      @if (result()) {
+        <div class="metrics-grid fade-in" style="margin-bottom:24px;">
+          @for (m of metrics(); track m.label) { <app-metric-card [config]="m" /> }
+        </div>
+
+        <app-chart-card
+          title="Net Worth Projection"
+          subtitle="Accumulation phase (indigo) → Drawdown phase (rose)"
+          [options]="projectionChart()"
+          height="360px" />
+      } @else {
+        <div class="empty-state glass">
+          <mat-icon>timeline</mat-icon>
+          <h3>Run a simulation</h3>
+          <p>Configure your scenario parameters and click <strong>Run Simulation</strong> to see projections.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

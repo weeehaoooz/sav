@@ -1,0 +1,328 @@
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+@use 'styles/typography';
+@use 'styles/glassmorphism';
+
+// ─── Angular Material dark theme override ───────────────────────────────────
+@use '@angular/material' as mat;
+@use '@angular/material/prebuilt-themes/pink-bluegrey.css';
+
+@include mat.core();
+
+// ─── Global resets & base ───────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background-color: $bg-root;
+  color: $text-primary;
+}
+
+body {
+  @include scrollbar-dark;
+}
+
+// ─── Material component overrides ────────────────────────────────────────────
+
+// Dialog
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: #111827;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-xl !important;
+}
+
+// ── Form fields — token-driven, covers both outline & filled variants ────────
+.mat-mdc-form-field {
+
+  // Shared surface
+  .mdc-text-field {
+    background: var(--input-bg) !important;
+    border-radius: var(--input-radius) !important;
+    transition: var(--input-transition);
+  }
+
+  // ── Outline variant (used in login + modals) ────────────────────────────
+  .mdc-text-field--outlined {
+
+    // idle border via notched-outline segments
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--input-border) !important;
+      transition: var(--input-transition);
+    }
+
+    .mdc-notched-outline__leading {
+      border-radius: var(--input-radius) 0 0 var(--input-radius) !important;
+    }
+
+    .mdc-notched-outline__trailing {
+      border-radius: 0 var(--input-radius) var(--input-radius) 0 !important;
+    }
+
+    // hover
+    &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):hover {
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: var(--input-border-hover) !important;
+      }
+
+      background: var(--input-bg-focus) !important;
+    }
+
+    // focus
+    &.mdc-text-field--focused {
+      background: var(--input-bg-focus) !important;
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: var(--input-border-focus) !important;
+        border-width: 1.5px !important;
+      }
+    }
+
+    // error
+    &.mdc-text-field--invalid {
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: var(--input-border-error) !important;
+      }
+    }
+  }
+
+  // ── Filled variant ──────────────────────────────────────────────────────
+  .mdc-text-field--filled {
+    .mdc-floating-label {
+      color: var(--input-label-color) !important;
+    }
+
+    &:not(.mdc-text-field--disabled) .mdc-line-ripple::before {
+      border-bottom-color: var(--input-border) !important;
+    }
+
+    &:not(.mdc-text-field--disabled) .mdc-line-ripple::after {
+      border-bottom-color: var(--input-border-focus) !important;
+    }
+  }
+
+  // Label colours
+  .mat-mdc-floating-label {
+    color: var(--input-label-color) !important;
+  }
+
+  &.mat-focused .mat-mdc-floating-label {
+    color: var(--input-border-focus) !important;
+  }
+
+  &.mat-form-field-invalid .mat-mdc-floating-label {
+    color: var(--input-border-error) !important;
+  }
+
+  // Input text & placeholder
+  input.mat-mdc-input-element {
+    color: var(--input-text-color) !important;
+    caret-color: var(--input-border-focus);
+
+    &::placeholder {
+      color: var(--input-placeholder) !important;
+    }
+  }
+
+  // Prefix/suffix icons
+  .mat-mdc-form-field-icon-prefix .mat-icon,
+  .mat-mdc-form-field-icon-suffix .mat-icon {
+    color: var(--input-prefix-color);
+    transition: color 180ms ease;
+  }
+
+  &.mat-focused {
+    .mat-mdc-form-field-icon-prefix .mat-icon {
+      color: var(--input-border-focus);
+    }
+  }
+
+  // Error hint text
+  .mat-mdc-form-field-error {
+    color: var(--input-border-error);
+  }
+}
+
+// Buttons
+.mdc-button {
+  font-family: $font-family !important;
+  font-weight: $font-weight-medium !important;
+  letter-spacing: 0 !important;
+  border-radius: $radius-sm !important;
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background: linear-gradient(135deg, $accent-indigo, $accent-indigo-dark) !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3) !important;
+}
+
+// Snackbar
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: #1e2740;
+  border: 1px solid $border-medium;
+  border-radius: $radius-md !important;
+}
+
+// Menu
+.mat-mdc-menu-panel {
+  background: #111827 !important;
+  border: 1px solid $border-subtle !important;
+  border-radius: $radius-md !important;
+  box-shadow: $shadow-lg !important;
+}
+
+// Select
+.mat-mdc-select-panel {
+  background: #111827 !important;
+  border: 1px solid $border-subtle !important;
+  border-radius: $radius-md !important;
+}
+
+// Tabs
+.mat-mdc-tab-header {
+  border-bottom: 1px solid $border-subtle;
+}
+
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: $accent-indigo-light !important;
+}
+
+// ─── Layout utilities ────────────────────────────────────────────────────────
+.page-content {
+  padding: $space-xl;
+  max-width: $content-max-width;
+}
+
+.section-gap {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.metrics-grid {
+  @include responsive-grid(220px);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-lg;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $space-lg;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ─── Misc utilities ──────────────────────────────────────────────────────────
+.divider {
+  height: 1px;
+  background: $border-subtle;
+  margin: $space-md 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+
+  &.badge-indigo {
+    background: rgba(99, 102, 241, 0.15);
+    color: $accent-indigo-light;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+  }
+
+  &.badge-green {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  &.badge-amber {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  &.badge-rose {
+    background: rgba(244, 63, 94, 0.12);
+    color: #fb7185;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+  }
+}
+
+// ─── Loading state ───────────────────────────────────────────────────────────
+.loading-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: $radius-sm;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 300ms ease forwards;
+}
+
+// ─── Reduced Animations ───────────────────────────────────────────────────────
+body.reduced-animations {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

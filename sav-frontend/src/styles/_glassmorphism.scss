@@ -1,0 +1,62 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Glassmorphism Utility Classes
+// ─────────────────────────────────────────────────────────────────────────────
+
+.glass {
+  @include glass-card;
+}
+
+.glass-hover {
+  @include glass-card-hover;
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid $border-medium;
+  border-radius: $radius-lg;
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  box-shadow: $shadow-md;
+}
+
+// Glowing border top accent
+.glass-accent {
+  @include glass-card;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, $accent-indigo, transparent);
+  }
+}
+
+.glass-accent-cyan {
+  @include glass-card;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, $accent-cyan, transparent);
+  }
+}
+
+// Gradient dot background (subtle)
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}

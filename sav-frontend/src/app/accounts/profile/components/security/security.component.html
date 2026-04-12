@@ -1,0 +1,35 @@
+<div class="tab-pane fade-in">
+  <div class="pane-header">
+    <h2>Security Settings</h2>
+    <p class="text-muted">Ensure your account uses a strong, secure password.</p>
+  </div>
+  
+  <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="settings-form max-w-sm">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Current Password</mat-label>
+      <input matInput type="password" formControlName="currentPassword">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="w-full mt-2">
+      <mat-label>New Password</mat-label>
+      <input matInput type="password" formControlName="newPassword">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="w-full mt-2">
+      <mat-label>Confirm New Password</mat-label>
+      <input matInput type="password" formControlName="confirmPassword">
+    </mat-form-field>
+    
+    <div class="form-actions mt-4">
+      <button mat-flat-button color="warn" type="submit" [disabled]="loadingPassword()">
+        Update Password
+      </button>
+    </div>
+  </form>
+
+  <!-- Messages Output -->
+  @if (message()) {
+    <div class="toast" [class]="message()?.type">
+      <mat-icon>{{ message()?.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+      <span>{{ message()?.text }}</span>
+    </div>
+  }
+</div>

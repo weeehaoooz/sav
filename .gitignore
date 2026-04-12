@@ -1,0 +1,28 @@
+.claude/
+
+# Dependency directories
+/node_modules
+/vendor
+.venv
+venv/
+
+# Build outputs and compiled code
+/dist
+/build
+*.min.js
+*.map
+
+# IDE and OS generated files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Local environment variables and secrets
+.env
+.env.local
+secrets.json
+
+# Log files
+*.log
+```
