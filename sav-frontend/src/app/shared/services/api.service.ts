@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { User } from '../models/user.model';
 import { Account } from '../models/account.model';
-import { Asset } from '../models/asset.model';
+import { Asset, AssetValuationHistory } from '../models/asset.model';
 import { Liability } from '../models/liability.model';
 import { Income } from '../models/income.model';
 import { Expense } from '../models/expense.model';
@@ -48,6 +48,12 @@ export class ApiService {
   }
   deleteAsset(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/assets/${id}/`);
+  }
+  getAssetHistory(assetId: number): Observable<AssetValuationHistory[]> {
+    return this.http.get<AssetValuationHistory[]>(`${this.base}/assets/${assetId}/history/`);
+  }
+  deleteAssetHistory(historyId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/asset-history/${historyId}/`);
   }
 
   // ── Liabilities ───────────────────────────────────────────────────────────

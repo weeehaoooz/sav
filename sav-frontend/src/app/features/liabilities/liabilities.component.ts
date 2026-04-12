@@ -8,9 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AgGridModule } from 'ag-grid-angular';
-import { ColDef, GridReadyEvent, GridApi, ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, GridApi, ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule, CellStyleModule } from 'ag-grid-community';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule]);
 
 import { StateService } from '../../shared/services/state.service';
 import { ApiService } from '../../shared/services/api.service';

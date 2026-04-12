@@ -4,6 +4,7 @@ import { StateService } from '../../shared/services/state.service';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { AssetService } from '../../shared/services/asset.service';
 import type { EChartsOption } from 'echarts';
 
 @Component({
@@ -15,6 +16,7 @@ import type { EChartsOption } from 'echarts';
 })
 export class DashboardComponent {
   readonly state = inject(StateService);
+  readonly assetService = inject(AssetService);
 
   // ── Metric Cards ─────────────────────────────────────────────────────────
   readonly metrics = computed<MetricCardConfig[]>(() => {
@@ -57,7 +59,7 @@ export class DashboardComponent {
 
   // ── Asset Allocation Donut ────────────────────────────────────────────────
   readonly assetAllocationChart = computed<EChartsOption>(() => {
-    const byType = this.state.assetsByType();
+    const byType = this.assetService.assetsByType();
     const data = Object.entries(byType).map(([type, assets]) => ({
       name: this.formatAssetType(type),
       value: assets.reduce((s, a) => s + a.current_value, 0),
@@ -143,9 +145,7 @@ export class DashboardComponent {
 
   private formatAssetType(type: string): string {
     const labels: Record<string, string> = {
-      cpf: 'CPF', bank: 'Bank', equity: 'Equity',
-      property: 'Property', crypto: 'Crypto',
-      insurance: 'Insurance', alternatives: 'Alt.',
+      bank: 'Bank', equity: 'Equity', cpf: 'CPF',
     };
     return labels[type] ?? type;
   }

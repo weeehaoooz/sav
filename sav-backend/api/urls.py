@@ -2,15 +2,16 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    UserViewSet, AccountViewSet, AssetViewSet, LiabilityViewSet,
-    IncomeViewSet, ExpenseViewSet, SimulationViewSet, DistributionRuleViewSet,
-    DashboardSummaryView, RetirementSimulationView, ProfileView
+    UserViewSet, AccountViewSet, AssetViewSet, AssetValuationHistoryViewSet,
+    LiabilityViewSet, IncomeViewSet, ExpenseViewSet, SimulationViewSet,
+    DistributionRuleViewSet, DashboardSummaryView, RetirementSimulationView, ProfileView
 )
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'accounts', AccountViewSet)
 router.register(r'assets', AssetViewSet)
+router.register(r'asset-history', AssetValuationHistoryViewSet)
 router.register(r'liabilities', LiabilityViewSet)
 router.register(r'income', IncomeViewSet)
 router.register(r'expenses', ExpenseViewSet)

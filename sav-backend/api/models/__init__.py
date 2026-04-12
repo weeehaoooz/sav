@@ -1,6 +1,6 @@
 from .users import CustomUser
 from .accounts import Account
-from .assets import Asset, AssetOwnership
+from .assets import Asset, AssetOwnership, AssetValuationHistory
 from .liabilities import Liability
 from .incomes import Income
 from .expenses import Expense
@@ -11,6 +11,7 @@ __all__ = [
     'Account',
     'Asset',
     'AssetOwnership',
+    'AssetValuationHistory',
     'Liability',
     'Income',
     'Expense',

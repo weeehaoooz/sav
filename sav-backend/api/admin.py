@@ -1,6 +1,6 @@
 from django.contrib import admin
 from api.models import (
-    CustomUser, Account, Asset, AssetOwnership,
+    CustomUser, Account, Asset, AssetOwnership, AssetValuationHistory,
     Liability, Income, Expense, Simulation, DistributionRule
 )
 
@@ -20,9 +20,16 @@ class AccountAdmin(admin.ModelAdmin):
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ['name', 'asset_type', 'current_value', 'growth_rate']
+    list_display = ['name', 'asset_type', 'current_value', 'valuation_date']
     list_filter = ['asset_type']
     search_fields = ['name']
+
+
+@admin.register(AssetValuationHistory)
+class AssetValuationHistoryAdmin(admin.ModelAdmin):
+    list_display = ['asset', 'valuation_date', 'current_value', 'created_at']
+    list_filter = ['valuation_date']
+    search_fields = ['asset__name']
 
 
 @admin.register(AssetOwnership)

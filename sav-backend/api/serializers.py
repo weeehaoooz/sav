@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from api.models import (
-    CustomUser, Account, Asset, AssetOwnership,
+    CustomUser, Account, Asset, AssetOwnership, AssetValuationHistory,
     Liability, Income, Expense, Simulation, DistributionRule
 )
 
@@ -38,6 +38,15 @@ class AssetOwnershipSerializer(serializers.ModelSerializer):
         fields = ['id', 'account', 'account_name', 'ownership_percentage']
 
 
+class AssetValuationHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AssetValuationHistory
+        fields = [
+            'id', 'asset', 'valuation_date', 'current_value',
+            'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra', 'created_at'
+        ]
+
+
 class AssetSerializer(serializers.ModelSerializer):
     ownerships = AssetOwnershipSerializer(many=True, read_only=True)
     gain_loss = serializers.SerializerMethodField()
@@ -47,7 +56,8 @@ class AssetSerializer(serializers.ModelSerializer):
         model = Asset
         fields = [
             'id', 'name', 'asset_type', 'current_value', 'acquisition_value',
-            'growth_rate', 'liquidity_score', 'notes', 'ownerships',
+            'currency', 'valuation_date', 'ownerships',
+            'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra',
             'gain_loss', 'gain_loss_pct', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
@@ -64,13 +74,29 @@ class AssetSerializer(serializers.ModelSerializer):
 class AssetWriteSerializer(serializers.ModelSerializer):
     """Simplified write serializer for creating/updating assets."""
     ownerships = AssetOwnershipSerializer(many=True, required=False)
+    
+    # Make type-specific fields optional and allow nulls (which we will handle in save)
+    acquisition_value = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
+    cpf_oa = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
+    cpf_sa = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
+    cpf_ma = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
+    cpf_ra = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
 
     class Meta:
         model = Asset
         fields = [
             'id', 'name', 'asset_type', 'current_value', 'acquisition_value',
-            'growth_rate', 'liquidity_score', 'notes', 'ownerships'
+            'currency', 'valuation_date', 'ownerships',
+            'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra'
         ]
+
+    def to_internal_value(self, data):
+        # Convert nulls to 0 for decimal fields
+        decimal_fields = ['acquisition_value', 'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra']
+        for field in decimal_fields:
+            if field in data and data[field] is None:
+                data[field] = 0
+        return super().to_internal_value(data)
 
     def create(self, validated_data):
         ownerships_data = validated_data.pop('ownerships', [])

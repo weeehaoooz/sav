@@ -1,28 +1,29 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Asset(models.Model):
     """Financial asset with multi-owner support."""
 
     ASSET_TYPE_CHOICES = [
-        ('cpf', 'CPF'),
         ('bank', 'Bank Account'),
         ('equity', 'Equities'),
-        ('property', 'Property'),
-        ('crypto', 'Crypto'),
-        ('insurance', 'Insurance (Cash Value)'),
-        ('alternatives', 'Alternatives'),
+        ('cpf', 'CPF'),
     ]
 
     name = models.CharField(max_length=200)
     asset_type = models.CharField(max_length=20, choices=ASSET_TYPE_CHOICES)
     current_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # CPF breakdown fields
+    cpf_oa = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cpf_sa = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cpf_ma = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cpf_ra = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
     acquisition_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    growth_rate = models.DecimalField(
-        max_digits=6, decimal_places=4, default=0, help_text='Annual growth rate as decimal (e.g. 0.07 = 7%)'
-    )
-    liquidity_score = models.IntegerField(default=5, help_text='Liquidity score 1-10')
-    notes = models.TextField(blank=True)
+    currency = models.CharField(max_length=3, default='SGD')
+    valuation_date = models.DateField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -30,8 +31,75 @@ class Asset(models.Model):
         db_table = 'assets'
         ordering = ['-current_value']
 
+    def save(self, *args, **kwargs):
+        if self.asset_type == 'cpf':
+            self.current_value = self.cpf_oa + self.cpf_sa + self.cpf_ma + self.cpf_ra
+        
+        # Check if relevant values changed before creating history
+        should_create_history = True
+        if self.pk:
+            old_instance = Asset.objects.get(pk=self.pk)
+            # Compare current state with DB state
+            if (old_instance.current_value == self.current_value and 
+                old_instance.valuation_date == self.valuation_date and
+                old_instance.cpf_oa == self.cpf_oa and
+                old_instance.cpf_sa == self.cpf_sa and
+                old_instance.cpf_ma == self.cpf_ma and
+                old_instance.cpf_ra == self.cpf_ra):
+                should_create_history = False
+
+        super().save(*args, **kwargs)
+        
+        if should_create_history:
+            # Create history snapshot
+            AssetValuationHistory.objects.create(
+                asset=self,
+                valuation_date=self.valuation_date,
+                current_value=self.current_value,
+                cpf_oa=self.cpf_oa,
+                cpf_sa=self.cpf_sa,
+                cpf_ma=self.cpf_ma,
+                cpf_ra=self.cpf_ra
+            )
+
+    def refresh_from_history(self):
+        """Update the main asset fields from the latest valuation in history."""
+        latest = self.valuation_history.first()
+        if latest:
+            self.current_value = latest.current_value
+            self.valuation_date = latest.valuation_date
+            self.cpf_oa = latest.cpf_oa
+            self.cpf_sa = latest.cpf_sa
+            self.cpf_ma = latest.cpf_ma
+            self.cpf_ra = latest.cpf_ra
+            # Save without triggering a new history record
+            super().save()
+
     def __str__(self):
         return f"{self.name} ({self.asset_type})"
+
+
+class AssetValuationHistory(models.Model):
+    """Historical snapshot of an asset's valuation at a specific point in time."""
+
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='valuation_history')
+    valuation_date = models.DateField()
+    current_value = models.DecimalField(max_digits=15, decimal_places=2)
+    
+    # Snapshot of CPF sub-accounts if applicable
+    cpf_oa = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cpf_sa = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cpf_ma = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cpf_ra = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'asset_valuation_history'
+        ordering = ['-valuation_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.asset.name} - {self.valuation_date} - ${self.current_value}"
 
 
 class AssetOwnership(models.Model):

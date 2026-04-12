@@ -8,19 +8,25 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AgGridModule } from 'ag-grid-angular';
-import { ColDef, GridReadyEvent, GridApi } from 'ag-grid-community';
-import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, GridApi, CellStyleModule } from 'ag-grid-community';
+import { ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule } from 'ag-grid-community';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule]);
 
 import { StateService } from '../../shared/services/state.service';
 import { ApiService } from '../../shared/services/api.service';
 import { ThemeService } from '../../shared/services/theme.service';
+import { AssetService } from '../../shared/services/asset.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { savGridTheme } from '../../shared/ag-grid-theme';
 import { Asset, AssetType } from '../../shared/models/asset.model';
+import { AssetHistoryDialogComponent } from './asset-history-dialog/asset-history-dialog.component';
+import { UserService } from '../../shared/services/user.service';
 
 @Component({
   selector: 'app-assets',
@@ -29,6 +35,7 @@ import { Asset, AssetType } from '../../shared/models/asset.model';
     CommonModule, FormsModule, ReactiveFormsModule,
     MatIconModule, MatButtonModule, MatDialogModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatSnackBarModule,
+    MatDatepickerModule, MatNativeDateModule, MatTooltipModule,
     AgGridModule, PageHeaderComponent, MetricCardComponent,
   ],
   templateUrl: './assets.component.html',
@@ -36,10 +43,13 @@ import { Asset, AssetType } from '../../shared/models/asset.model';
 })
 export class AssetsComponent implements OnInit {
   readonly state = inject(StateService);
+  readonly assetService = inject(AssetService);
   private readonly api = inject(ApiService);
   private readonly themeService = inject(ThemeService);
   private readonly snackbar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
+  protected readonly userService = inject(UserService);
 
   private gridApi!: GridApi;
   readonly showForm = signal(false);
@@ -53,26 +63,37 @@ export class AssetsComponent implements OnInit {
     asset_type: ['bank' as AssetType, Validators.required],
     current_value: [0, [Validators.required, Validators.min(0)]],
     acquisition_value: [0, Validators.min(0)],
-    growth_rate: [0.07],
-    liquidity_score: [5, [Validators.min(1), Validators.max(10)]],
-    notes: [''],
+    currency: ['SGD', Validators.required],
+    valuation_date: [new Date(), Validators.required],
+    cpf_oa: [0],
+    cpf_sa: [0],
+    cpf_ma: [0],
+    cpf_ra: [0],
   });
 
-  readonly assetTypes: { value: AssetType; label: string }[] = [
+  readonly allAssetTypes: { value: AssetType; label: string }[] = [
     { value: 'bank', label: 'Bank Account' },
-    { value: 'cpf', label: 'CPF' },
     { value: 'equity', label: 'Equities' },
-    { value: 'property', label: 'Property' },
-    { value: 'crypto', label: 'Crypto' },
-    { value: 'insurance', label: 'Insurance' },
-    { value: 'alternatives', label: 'Alternatives' },
+    { value: 'cpf', label: 'CPF (Consolidated)' },
   ];
+
+  readonly assetTypes = computed(() => this.allAssetTypes);
+
+  isInvestment(type: string): boolean {
+    return ['equity'].includes(type);
+  }
 
   readonly colDefs: ColDef<Asset>[] = [
     { field: 'name', headerName: 'Asset Name', flex: 2, minWidth: 160 },
     {
       field: 'asset_type', headerName: 'Type', flex: 1,
-      valueFormatter: p => this.assetTypes.find(t => t.value === p.value)?.label ?? p.value,
+      valueFormatter: p => this.allAssetTypes.find(t => t.value === p.value)?.label ?? p.value,
+      tooltipValueGetter: p => {
+        if (p.data?.asset_type === 'cpf') {
+          return `OA: $${p.data.cpf_oa.toLocaleString()} | SA: $${p.data.cpf_sa.toLocaleString()} | MA: $${p.data.cpf_ma.toLocaleString()}${p.data.cpf_ra > 0 ? ' | RA: $' + p.data.cpf_ra.toLocaleString() : ''}`;
+        }
+        return '';
+      }
     },
     {
       field: 'current_value', headerName: 'Current Value', flex: 1, type: 'rightAligned',
@@ -82,24 +103,33 @@ export class AssetsComponent implements OnInit {
       field: 'gain_loss', headerName: 'Gain/Loss', flex: 1, type: 'rightAligned',
       cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
       valueFormatter: p => {
+        const assetType = p.data?.asset_type;
+        if (!assetType || !this.isInvestment(assetType)) return '—';
         const v = p.value ?? 0;
-        return `${v >= 0 ? '+' : ''}SGD ${Math.abs(v).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
+        const currency = p.data?.currency || 'SGD';
+        return `${v >= 0 ? '+' : ''}${currency} ${Math.abs(v).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
       },
     },
     {
-      field: 'growth_rate', headerName: 'Growth Rate', flex: 1,
-      valueFormatter: p => `${((p.value ?? 0) * 100).toFixed(1)}%`,
+      field: 'valuation_date', headerName: 'Latest Acquisition Date', flex: 1,
+      sort: 'desc',
+      valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString() : '—',
     },
-    { field: 'liquidity_score', headerName: 'Liquidity', flex: 0.7 },
     {
-      headerName: 'Actions', flex: 0.8, sortable: false, filter: false,
+      field: 'currency', headerName: 'Ccy', flex: 0.5,
+      hide: true, // Kept hidden but available for tooltips or filtering
+    },
+    {
+      headerName: 'Actions', flex: 1.2, sortable: false, filter: false,
       cellRenderer: (p: any) => `
         <div style="display:flex;gap:4px;align-items:center;height:100%">
+          <button id="history-${p.data.id}" style="background:rgba(52,211,153,0.12);border:none;color:#34d399;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">History</button>
           <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Edit</button>
           <button id="del-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
         </div>`,
       onCellClicked: (p) => {
         const target = p.event?.target as HTMLElement;
+        if (target?.id?.startsWith('history-') && p.data) this.openHistory(p.data);
         if (target?.id?.startsWith('edit-') && p.data) this.openEdit(p.data);
         if (target?.id?.startsWith('del-') && p.data) this.deleteAsset(p.data.id);
       },
@@ -112,32 +142,41 @@ export class AssetsComponent implements OnInit {
     resizable: true,
   };
 
-  // Metrics
   readonly metrics = computed<MetricCardConfig[]>(() => [
     {
       label: 'Total Assets',
-      value: this.state.totalAssetValue(),
+      value: this.assetService.totalAssetValue(),
       format: 'currency',
       icon: 'account_balance',
       accentColor: '#6366f1',
     },
     {
       label: 'Total Gain/Loss',
-      value: this.state.assets().reduce((s, a) => s + a.gain_loss, 0),
+      value: this.assetService.assets().reduce((s, a) => s + a.gain_loss, 0),
       format: 'currency',
       icon: 'trending_up',
       accentColor: '#10b981',
     },
     {
       label: 'Asset Count',
-      value: this.state.assets().length,
+      value: this.assetService.assets().length,
       format: 'number',
       icon: 'list',
       accentColor: '#06b6d4',
     },
   ]);
 
-  ngOnInit(): void { }
+  ngOnInit(): void {
+    // Auto-calculate current_value when CPF fields change
+    this.assetForm.valueChanges.subscribe(val => {
+      if (val.asset_type === 'cpf') {
+        const total = (val.cpf_oa || 0) + (val.cpf_sa || 0) + (val.cpf_ma || 0) + (val.cpf_ra || 0);
+        if (this.assetForm.get('current_value')?.value !== total) {
+          this.assetForm.get('current_value')?.setValue(total, { emitEvent: false });
+        }
+      }
+    });
+  }
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
@@ -145,7 +184,11 @@ export class AssetsComponent implements OnInit {
 
   openCreate(): void {
     this.editingId.set(null);
-    this.assetForm.reset({ asset_type: 'bank', growth_rate: 0.07, liquidity_score: 5 });
+    this.assetForm.reset({
+      asset_type: 'bank',
+      currency: 'SGD',
+      valuation_date: new Date()
+    });
     this.showForm.set(true);
   }
 
@@ -156,9 +199,12 @@ export class AssetsComponent implements OnInit {
       asset_type: asset.asset_type,
       current_value: asset.current_value,
       acquisition_value: asset.acquisition_value,
-      growth_rate: asset.growth_rate,
-      liquidity_score: asset.liquidity_score,
-      notes: asset.notes,
+      currency: asset.currency,
+      valuation_date: new Date(),
+      cpf_oa: asset.cpf_oa,
+      cpf_sa: asset.cpf_sa,
+      cpf_ma: asset.cpf_ma,
+      cpf_ra: asset.cpf_ra,
     });
     this.showForm.set(true);
   }
@@ -166,14 +212,31 @@ export class AssetsComponent implements OnInit {
   save(): void {
     if (this.assetForm.invalid) return;
     this.saving.set(true);
-    const data = this.assetForm.value as Partial<Asset>;
+    const data = { ...this.assetForm.value } as any;
+    // Format date for backend (YYYY-MM-DD)
+    if (data.valuation_date) {
+      const d = new Date(data.valuation_date);
+      data.valuation_date = d.toISOString().split('T')[0];
+    }
+
+    // Clean up fields based on asset type
+    if (data.asset_type !== 'cpf') {
+      delete data.cpf_oa;
+      delete data.cpf_sa;
+      delete data.cpf_ma;
+      delete data.cpf_ra;
+    }
+    if (data.asset_type !== 'equity') {
+      delete data.acquisition_value;
+    }
+
     const id = this.editingId();
 
     const obs = id ? this.api.updateAsset(id, data) : this.api.createAsset(data);
     obs.subscribe({
       next: (asset) => {
-        if (id) this.state.updateAsset(asset);
-        else this.state.addAsset(asset);
+        if (id) this.assetService.updateAsset(asset);
+        else this.assetService.addAsset(asset);
         this.showForm.set(false);
         this.saving.set(false);
         this.snackbar.open(id ? 'Asset updated' : 'Asset added', 'Close', { duration: 3000 });
@@ -186,9 +249,10 @@ export class AssetsComponent implements OnInit {
   }
 
   deleteAsset(id: number): void {
+    if (!confirm('Are you sure you want to delete this asset?')) return;
     this.api.deleteAsset(id).subscribe({
       next: () => {
-        this.state.removeAsset(id);
+        this.assetService.removeAsset(id);
         this.snackbar.open('Asset deleted', 'Close', { duration: 3000 });
       },
     });
@@ -196,5 +260,17 @@ export class AssetsComponent implements OnInit {
 
   cancelForm(): void {
     this.showForm.set(false);
+  }
+
+  openHistory(asset: Asset): void {
+    const dialogRef = this.dialog.open(AssetHistoryDialogComponent, {
+      data: { asset },
+      width: '600px'
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      // Refresh assets in case history was deleted and master value changed
+      this.assetService.loadAssets();
+    });
   }
 }

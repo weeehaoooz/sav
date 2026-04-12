@@ -4,12 +4,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import (
-    CustomUser, Account, Asset, AssetOwnership,
+    CustomUser, Account, Asset, AssetOwnership, AssetValuationHistory,
     Liability, Income, Expense, Simulation, DistributionRule
 )
 from api.serializers import (
     CustomUserSerializer, AccountSerializer,
     AssetSerializer, AssetWriteSerializer, AssetOwnershipSerializer,
+    AssetValuationHistorySerializer,
     LiabilitySerializer, IncomeSerializer, ExpenseSerializer,
     SimulationSerializer, DistributionRuleSerializer
 )
@@ -60,6 +61,27 @@ class AssetViewSet(viewsets.ModelViewSet):
         rules = DistributionRule.objects.filter(asset=asset)
         serializer = DistributionRuleSerializer(rules, many=True)
         return Response(serializer.data)
+
+
+    @action(detail=True, methods=['get'], url_path='history')
+    def history(self, request, pk=None):
+        asset = self.get_object()
+        history = asset.valuation_history.all()
+        serializer = AssetValuationHistorySerializer(history, many=True)
+        return Response(serializer.data)
+
+
+class AssetValuationHistoryViewSet(viewsets.ModelViewSet):
+    queryset = AssetValuationHistory.objects.all()
+    serializer_class = AssetValuationHistorySerializer
+
+    def destroy(self, request, *args, **kwargs):
+        history_item = self.get_object()
+        asset = history_item.asset
+        response = super().destroy(request, *args, **kwargs)
+        # After deletion, refresh the asset from the remaining history
+        asset.refresh_from_history()
+        return response
 
 
 # ── Liabilities ───────────────────────────────────────────────────────────────

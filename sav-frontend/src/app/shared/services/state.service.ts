@@ -13,11 +13,13 @@ import { DashboardSummary } from '../models/dashboard.model';
  * Acts as a single reactive store across all feature components.
  */
 import { AuthService } from './auth.service';
+import { AssetService } from './asset.service';
 
 @Injectable({ providedIn: 'root' })
 export class StateService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly assetService = inject(AssetService);
 
   constructor() {
     if (this.auth.isAuthenticated()) {
@@ -25,28 +27,17 @@ export class StateService {
     }
   }
 
-  // ── Assets ────────────────────────────────────────────────────────────────
-  private _assets = signal<Asset[]>([]);
-  readonly assets = this._assets.asReadonly();
-
-  readonly totalAssetValue = computed(() =>
-    this._assets().reduce((sum, a) => sum + a.current_value, 0)
-  );
-
-  readonly assetsByType = computed(() => {
-    const grouped: Record<string, Asset[]> = {};
-    for (const asset of this._assets()) {
-      (grouped[asset.asset_type] ??= []).push(asset);
-    }
-    return grouped;
-  });
+  // ── Assets (Delegated to AssetService) ──────────────────────────────────
+  readonly assets = this.assetService.assets;
+  readonly totalAssetValue = this.assetService.totalAssetValue;
+  readonly assetsByType = this.assetService.assetsByType;
 
   // ── Liabilities ───────────────────────────────────────────────────────────
   private _liabilities = signal<Liability[]>([]);
   readonly liabilities = this._liabilities.asReadonly();
 
   readonly totalLiabilityValue = computed(() =>
-    this._liabilities().reduce((sum, l) => sum + l.outstanding_balance, 0)
+    this._liabilities().reduce((sum, l) => sum + (Number(l.outstanding_balance) || 0), 0)
   );
 
   // ── Income ────────────────────────────────────────────────────────────────
@@ -54,7 +45,7 @@ export class StateService {
   readonly income = this._income.asReadonly();
 
   readonly totalMonthlyIncome = computed(() =>
-    this._income().filter(i => i.is_active).reduce((sum, i) => sum + i.monthly_equivalent, 0)
+    this._income().filter(i => i.is_active).reduce((sum, i) => sum + (Number(i.monthly_equivalent) || 0), 0)
   );
 
   // ── Expenses ──────────────────────────────────────────────────────────────
@@ -62,7 +53,7 @@ export class StateService {
   readonly expenses = this._expenses.asReadonly();
 
   readonly totalMonthlyExpenses = computed(() =>
-    this._expenses().filter(e => e.is_active).reduce((sum, e) => sum + e.monthly_equivalent, 0)
+    this._expenses().filter(e => e.is_active).reduce((sum, e) => sum + (Number(e.monthly_equivalent) || 0), 0)
   );
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -80,7 +71,7 @@ export class StateService {
   // ── Loaders ───────────────────────────────────────────────────────────────
   loadAll(): void {
     this.loading.set(true);
-    this.api.getAssets().subscribe(data => this._assets.set(data));
+    this.assetService.loadAssets();
     this.api.getLiabilities().subscribe(data => this._liabilities.set(data));
     this.api.getIncome().subscribe(data => this._income.set(data));
     this.api.getExpenses().subscribe(data => this._expenses.set(data));
@@ -93,16 +84,11 @@ export class StateService {
     });
   }
 
-  // ── Mutations — Assets ─────────────────────────────────────────────────
-  addAsset(asset: Asset): void {
-    this._assets.update(list => [asset, ...list]);
-  }
-  updateAsset(updated: Asset): void {
-    this._assets.update(list => list.map(a => a.id === updated.id ? updated : a));
-  }
-  removeAsset(id: number): void {
-    this._assets.update(list => list.filter(a => a.id !== id));
-  }
+  // These are now handled in AssetService directly by feature components.
+  // We keep them here temporarily as proxies if needed, but better to call AssetService.
+  addAsset(asset: Asset): void { this.assetService.addAsset(asset); }
+  updateAsset(updated: Asset): void { this.assetService.updateAsset(updated); }
+  removeAsset(id: number): void { this.assetService.removeAsset(id); }
 
   // ── Mutations — Liabilities ────────────────────────────────────────────
   addLiability(l: Liability): void {

@@ -1,4 +1,7 @@
-export type AssetType = 'cpf' | 'bank' | 'equity' | 'property' | 'crypto' | 'insurance' | 'alternatives';
+export type AssetType = 
+  | 'bank' 
+  | 'equity' 
+  | 'cpf';
 
 export interface AssetOwnership {
   id: number;
@@ -13,12 +16,27 @@ export interface Asset {
   asset_type: AssetType;
   current_value: number;
   acquisition_value: number;
-  growth_rate: number;
-  liquidity_score: number;
-  notes: string;
+  currency: string;
+  valuation_date: string;
+  cpf_oa: number;
+  cpf_sa: number;
+  cpf_ma: number;
+  cpf_ra: number;
   ownerships: AssetOwnership[];
   gain_loss: number;
   gain_loss_pct: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface AssetValuationHistory {
+  id: number;
+  asset: number;
+  valuation_date: string;
+  current_value: number;
+  cpf_oa: number;
+  cpf_sa: number;
+  cpf_ma: number;
+  cpf_ra: number;
+  created_at: string;
 }

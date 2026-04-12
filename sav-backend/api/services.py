@@ -91,7 +91,7 @@ def calculate_emergency_fund(accounts):
     for account in accounts:
         for ownership in account.asset_ownerships.select_related('asset').all():
             asset = ownership.asset
-            if asset.asset_type in ('bank',) and asset.liquidity_score >= 8:
+            if asset.asset_type == 'bank':
                 owned_value = asset.current_value * (ownership.ownership_percentage / Decimal('100'))
                 liquid_assets += owned_value
         for expense in account.expenses.filter(is_active=True):
