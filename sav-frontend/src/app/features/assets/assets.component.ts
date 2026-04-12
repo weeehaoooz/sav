@@ -27,6 +27,8 @@ import { savGridTheme } from '../../shared/ag-grid-theme';
 import { Asset, AssetType } from '../../shared/models/asset.model';
 import { AssetHistoryDialogComponent } from './asset-history-dialog/asset-history-dialog.component';
 import { UserService } from '../../shared/services/user.service';
+import { NetworthService } from '../../shared/services/networth.service';
+import { AssetFormComponent } from './components/asset-form/asset-form.component';
 
 @Component({
   selector: 'app-assets',
@@ -36,7 +38,7 @@ import { UserService } from '../../shared/services/user.service';
     MatIconModule, MatButtonModule, MatDialogModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatSnackBarModule,
     MatDatepickerModule, MatNativeDateModule, MatTooltipModule,
-    AgGridModule, PageHeaderComponent, MetricCardComponent,
+    AgGridModule, PageHeaderComponent, MetricCardComponent, AssetFormComponent
   ],
   templateUrl: './assets.component.html',
   styleUrls: ['./assets.component.scss'],
@@ -44,6 +46,7 @@ import { UserService } from '../../shared/services/user.service';
 export class AssetsComponent implements OnInit {
   readonly state = inject(StateService);
   readonly assetService = inject(AssetService);
+  readonly netWorthService = inject(NetworthService);
   private readonly api = inject(ApiService);
   private readonly themeService = inject(ThemeService);
   private readonly snackbar = inject(MatSnackBar);
@@ -53,35 +56,16 @@ export class AssetsComponent implements OnInit {
 
   private gridApi!: GridApi;
   readonly showForm = signal(false);
-  readonly editingId = signal<number | null>(null);
+  readonly selectedAssetForEdit = signal<Asset | null>(null);
   readonly saving = signal(false);
 
   readonly gridTheme = savGridTheme;
-
-  readonly assetForm = this.fb.group({
-    name: ['', Validators.required],
-    asset_type: ['bank' as AssetType, Validators.required],
-    current_value: [0, [Validators.required, Validators.min(0)]],
-    acquisition_value: [0, Validators.min(0)],
-    currency: ['SGD', Validators.required],
-    valuation_date: [new Date(), Validators.required],
-    cpf_oa: [0],
-    cpf_sa: [0],
-    cpf_ma: [0],
-    cpf_ra: [0],
-  });
 
   readonly allAssetTypes: { value: AssetType; label: string }[] = [
     { value: 'bank', label: 'Bank Account' },
     { value: 'equity', label: 'Equities' },
     { value: 'cpf', label: 'CPF (Consolidated)' },
   ];
-
-  readonly assetTypes = computed(() => this.allAssetTypes);
-
-  isInvestment(type: string): boolean {
-    return ['equity'].includes(type);
-  }
 
   readonly colDefs: ColDef<Asset>[] = [
     { field: 'name', headerName: 'Asset Name', flex: 2, minWidth: 160 },
@@ -100,12 +84,10 @@ export class AssetsComponent implements OnInit {
       valueFormatter: p => `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`,
     },
     {
-      field: 'ytd_gain_loss', headerName: 'YTD Gain/Loss', flex: 1, type: 'rightAligned',
+      field: 'ytd_gain_loss', headerName: 'Gains and Loss (YTD)', flex: 1, type: 'rightAligned',
       tooltipValueGetter: () => 'Year-to-Date Change: Compares current value to the earliest entry of this year.',
       cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
       valueFormatter: p => {
-        const assetType = p.data?.asset_type;
-        if (!assetType || !this.isInvestment(assetType)) return '—';
         const v = p.value ?? 0;
         const currency = p.data?.currency || 'SGD';
         return `${v >= 0 ? '+' : ''}${currency} ${Math.abs(v).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
@@ -143,40 +125,45 @@ export class AssetsComponent implements OnInit {
     resizable: true,
   };
 
-  readonly metrics = computed<MetricCardConfig[]>(() => [
-    {
-      label: 'Total Assets',
-      value: this.assetService.totalAssetValue(),
-      format: 'currency',
-      icon: 'account_balance',
-      accentColor: '#6366f1',
-    },
-    {
-      label: 'Total YTD Gain/Loss',
-      value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
-      format: 'currency',
-      icon: 'trending_up',
-      accentColor: '#10b981',
-    },
-    {
-      label: 'Asset Count',
-      value: this.assetService.assets().length,
-      format: 'number',
-      icon: 'list',
-      accentColor: '#06b6d4',
-    },
-  ]);
+  readonly metrics = computed<MetricCardConfig[]>(() => {
+    const d = this.state.dashboard();
+    return [
+      {
+        label: 'Net Worth',
+        value: this.netWorthService.networth(),
+        format: 'currency',
+        icon: 'account_balance',
+        accentColor: '#6366f1',
+        subtitle: '(Net Value) Total Assets minus Total Liabilities (debts, loans)',
+      },
+      {
+        label: 'Total Assets',
+        value: this.assetService.totalAssetValue(),
+        format: 'currency',
+        icon: 'savings',
+        accentColor: '#06b6d4',
+        subtitle: '(Gross Value) Sum of all monetary assets (cash, investments, etc.)',
+      },
+      {
+        label: 'Total YTD Gain/Loss',
+        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
+        format: 'currency',
+        icon: 'trending_up',
+        accentColor: '#10b981',
+        subtitle: '(Performance) Total value change since start of year',
+      },
+      {
+        label: 'Asset Count',
+        value: this.assetService.assets().length,
+        format: 'number',
+        icon: 'list',
+        accentColor: '#f59e0b',
+        subtitle: '(Portfolio) Total number of individual assets',
+      },
+    ];
+  });
 
   ngOnInit(): void {
-    // Auto-calculate current_value when CPF fields change
-    this.assetForm.valueChanges.subscribe(val => {
-      if (val.asset_type === 'cpf') {
-        const total = (val.cpf_oa || 0) + (val.cpf_sa || 0) + (val.cpf_ma || 0) + (val.cpf_ra || 0);
-        if (this.assetForm.get('current_value')?.value !== total) {
-          this.assetForm.get('current_value')?.setValue(total, { emitEvent: false });
-        }
-      }
-    });
   }
 
   onGridReady(params: GridReadyEvent): void {
@@ -184,54 +171,27 @@ export class AssetsComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.editingId.set(null);
-    this.assetForm.reset({
-      asset_type: 'bank',
-      currency: 'SGD',
-      valuation_date: new Date()
-    });
+    this.selectedAssetForEdit.set(null);
     this.showForm.set(true);
   }
 
   openEdit(asset: Asset): void {
-    this.editingId.set(asset.id);
-    this.assetForm.patchValue({
-      name: asset.name,
-      asset_type: asset.asset_type,
-      current_value: asset.current_value,
-      acquisition_value: asset.acquisition_value,
-      currency: asset.currency,
-      valuation_date: new Date(),
-      cpf_oa: asset.cpf_oa,
-      cpf_sa: asset.cpf_sa,
-      cpf_ma: asset.cpf_ma,
-      cpf_ra: asset.cpf_ra,
-    });
+    this.selectedAssetForEdit.set(asset);
     this.showForm.set(true);
   }
 
-  save(): void {
-    if (this.assetForm.invalid) return;
+  handleSave(formData: any): void {
     this.saving.set(true);
-    const data = { ...this.assetForm.value } as any;
+    const data = { ...formData };
+    
     // Format date for backend (YYYY-MM-DD)
     if (data.valuation_date) {
       const d = new Date(data.valuation_date);
       data.valuation_date = d.toISOString().split('T')[0];
     }
 
-    // Clean up fields based on asset type
-    if (data.asset_type !== 'cpf') {
-      delete data.cpf_oa;
-      delete data.cpf_sa;
-      delete data.cpf_ma;
-      delete data.cpf_ra;
-    }
-    if (data.asset_type !== 'equity') {
-      delete data.acquisition_value;
-    }
-
-    const id = this.editingId();
+    const editingAsset = this.selectedAssetForEdit();
+    const id = editingAsset?.id;
 
     const obs = id ? this.api.updateAsset(id, data) : this.api.createAsset(data);
     obs.subscribe({
@@ -240,6 +200,7 @@ export class AssetsComponent implements OnInit {
         else this.assetService.addAsset(asset);
         this.showForm.set(false);
         this.saving.set(false);
+        this.selectedAssetForEdit.set(null);
         this.snackbar.open(id ? 'Asset updated' : 'Asset added', 'Close', { duration: 3000 });
       },
       error: () => {
@@ -266,7 +227,7 @@ export class AssetsComponent implements OnInit {
   openHistory(asset: Asset): void {
     const dialogRef = this.dialog.open(AssetHistoryDialogComponent, {
       data: { asset },
-      width: '600px'
+      width: '800px'
     });
 
     dialogRef.afterClosed().subscribe(() => {

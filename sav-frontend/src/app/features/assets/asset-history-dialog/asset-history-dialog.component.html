@@ -1,53 +1,38 @@
 <div class="header">
-  <h2 mat-dialog-title>History: {{ data.asset.name }}</h2>
-  <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+  <div class="header-info">
+    <h2 mat-dialog-title>History: {{ data.asset.name }}</h2>
+    <p class="subtitle">{{ history().length }} valuation snapshots found</p>
+  </div>
+  <button mat-icon-button mat-dialog-close aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
 </div>
 
 <mat-dialog-content class="dialog-content">
   @if (loading()) {
-    <div style="text-align: center; padding: 2rem;">Loading history...</div>
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Fetching valuation history...</p>
+  </div>
+  } @else if (history().length === 0) {
+  <div class="empty-state">
+    <mat-icon>history_toggle_off</mat-icon>
+    <p>No historical data available for this asset.</p>
+    <small>Values will appear here as you update the asset over time.</small>
+  </div>
   } @else {
-    @if (history().length === 0) {
-      <div style="text-align: center; padding: 2rem; color: #64748b;">No history found.</div>
-    } @else {
-      <table mat-table [dataSource]="history()" class="history-table">
-        <!-- Date Column -->
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef> Valuation Date </th>
-          <td mat-cell *matCellDef="let entry"> {{ entry.valuation_date | date:'dd MMM yyyy' }} </td>
-        </ng-container>
+  <div class="chart-container glass">
+    <div echarts [options]="chartOptions()" [autoResize]="true" class="echarts-el"></div>
+  </div>
 
-        <!-- Value Column -->
-        <ng-container matColumnDef="value">
-          <th mat-header-cell *matHeaderCellDef> Value </th>
-          <td mat-cell *matCellDef="let entry">
-            {{ data.asset.currency }} {{ entry.current_value | number:'1.0-0' }}
-            @if (data.asset.asset_type === 'cpf') {
-              <span class="cpf-breakdown">
-                OA: {{ entry.cpf_oa | number:'1.0-0' }} | SA: {{ entry.cpf_sa | number:'1.0-0' }} | MA: {{ entry.cpf_ma | number:'1.0-0' }}
-                @if (entry.cpf_ra > 0) { | RA: {{ entry.cpf_ra | number:'1.0-0' }} }
-              </span>
-            }
-          </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let entry">
-            <button mat-icon-button class="delete-btn" (click)="deleteEntry(entry.id)" title="Delete valuation entry">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
-      </table>
-    }
+  <div class="grid-container glass">
+    <ag-grid-angular [theme]="gridTheme" [rowData]="history()" [columnDefs]="colDefs"
+      [defaultColDef]="{ sortable: true, resizable: true }" [animateRows]="true" [rowHeight]="52"
+      (gridReady)="onGridReady($event)" />
+  </div>
   }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Close</button>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close class="close-btn">Close</button>
 </mat-dialog-actions>

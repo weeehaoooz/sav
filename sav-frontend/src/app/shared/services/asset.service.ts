@@ -1,13 +1,14 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Asset } from '../models/asset.model';
+import { LiabilityService } from './liability.service';
 
 @Injectable({ providedIn: 'root' })
 export class AssetService {
   private readonly api = inject(ApiService);
 
   private readonly _assets = signal<Asset[]>([]);
-  readonly assets = computed(() => 
+  readonly assets = computed(() =>
     [...this._assets()].sort((a, b) => new Date(b.valuation_date).getTime() - new Date(a.valuation_date).getTime())
   );
 

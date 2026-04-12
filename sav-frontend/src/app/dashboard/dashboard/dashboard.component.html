@@ -1,27 +1,19 @@
 <div class="page-content section-gap fade-in">
-  <app-page-header
-    title="Dashboard"
-    subtitle="Your financial overview at a glance" />
+  <app-page-header title="Dashboard" subtitle="Your financial overview at a glance" />
 
   <!-- Metric cards row -->
   <div class="metrics-grid">
     @for (metric of metrics(); track metric.label) {
-      <app-metric-card [config]="metric" />
+    <app-metric-card [config]="metric" />
     }
   </div>
 
   <!-- Charts row -->
   <div class="two-col">
-    <app-chart-card
-      title="Asset Allocation"
-      subtitle="By asset class"
-      [options]="assetAllocationChart()"
+    <app-chart-card title="Asset Allocation" subtitle="By asset class" [options]="assetAllocationChart()"
       [loading]="state.loading()" />
 
-    <app-chart-card
-      title="Monthly Cash Flow"
-      subtitle="Income vs Expenses"
-      [options]="cashFlowChart()"
+    <app-chart-card title="Monthly Cash Flow" subtitle="Income vs Expenses" [options]="cashFlowChart()"
       [loading]="state.loading()" />
   </div>
 
@@ -30,28 +22,32 @@
     <div class="summary-item">
       <div class="label">Total Assets</div>
       <div class="summary-value positive">
-        {{ (state.dashboard()?.net_worth?.total_assets ?? state.totalAssetValue()) | currency:'SGD':'symbol':'1.0-0' }}
+        {{ (state.dashboard()?.net_worth?.total_assets ?? assetService.totalAssetValue()) |
+        currency:'SGD':'symbol':'1.0-0' }}
       </div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-item">
       <div class="label">Total Liabilities</div>
       <div class="summary-value negative">
-        {{ (state.dashboard()?.net_worth?.total_liabilities ?? state.totalLiabilityValue()) | currency:'SGD':'symbol':'1.0-0' }}
+        {{ (state.dashboard()?.net_worth?.total_liabilities ?? liabilityService.totalLiabilityValue()) |
+        currency:'SGD':'symbol':'1.0-0' }}
       </div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-item">
       <div class="label">Monthly Income</div>
       <div class="summary-value">
-        {{ (state.dashboard()?.cash_flow?.monthly_income ?? state.totalMonthlyIncome()) | currency:'SGD':'symbol':'1.0-0' }}
+        {{ (state.dashboard()?.cash_flow?.monthly_income ?? state.totalMonthlyIncome()) |
+        currency:'SGD':'symbol':'1.0-0' }}
       </div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-item">
       <div class="label">Monthly Expenses</div>
       <div class="summary-value">
-        {{ (state.dashboard()?.cash_flow?.monthly_expenses ?? state.totalMonthlyExpenses()) | currency:'SGD':'symbol':'1.0-0' }}
+        {{ (state.dashboard()?.cash_flow?.monthly_expenses ?? state.totalMonthlyExpenses()) |
+        currency:'SGD':'symbol':'1.0-0' }}
       </div>
     </div>
   </div>

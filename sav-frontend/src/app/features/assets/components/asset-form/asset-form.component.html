@@ -1,0 +1,51 @@
+<div class="asset-form-container">
+  <div class="form-header">
+    <div class="header-info">
+      <h4>{{ asset ? 'Update Asset' : 'Add New Asset' }}</h4>
+      <p class="subtitle">{{ asset ? 'Keeping your wealth track accurate' : 'Start tracking another part of your wealth'
+        }}</p>
+    </div>
+    <button mat-icon-button (click)="cancel.emit()" id="close-asset-form-btn" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="type-selector-wrapper">
+    <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+      <mat-label>Asset Type</mat-label>
+      <mat-select [value]="selectedType()" (selectionChange)="onTypeChange($event.value)" [disabled]="!!asset">
+        <mat-select-trigger>
+          <div class="select-trigger-content">
+            @let selected = assetTypes.find(t => t.value === selectedType());
+            <mat-icon>{{ selected?.icon }}</mat-icon>
+            <span>{{ selected?.label }}</span>
+          </div>
+        </mat-select-trigger>
+        @for (t of assetTypes; track t.value) {
+        <mat-option [value]="t.value">
+          <div class="option-content">
+            <mat-icon>{{ t.icon }}</mat-icon>
+            <span>{{ t.label }}</span>
+          </div>
+        </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (asset) {
+    <mat-hint class="hint">Type cannot be changed for existing assets.</mat-hint>
+    }
+  </div>
+
+  <div class="type-form-container fade-in" [ngSwitch]="selectedType()">
+    <app-bank-asset-form *ngSwitchCase="'bank'" [asset]="asset" (save)="onSave($event)" (cancel)="cancel.emit()" />
+    <app-equity-asset-form *ngSwitchCase="'equity'" [asset]="asset" (save)="onSave($event)" (cancel)="cancel.emit()" />
+    <app-cpf-asset-form *ngSwitchCase="'cpf'" [asset]="asset" (save)="onSave($event)" (cancel)="cancel.emit()" />
+  </div>
+
+  @if (saving) {
+  <div class="saving-overlay glass">
+    <div class="spinner"></div>
+    <span>Saving...</span>
+  </div>
+  }
+</div>

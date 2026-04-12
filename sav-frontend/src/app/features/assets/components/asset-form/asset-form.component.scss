@@ -1,0 +1,118 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.asset-form-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  padding: $space-sm;
+  gap: $space-md;
+
+  .form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $space-sm;
+
+    h4 {
+      margin: 0;
+      font-size: $font-size-xl;
+      font-weight: $font-weight-semibold;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: $font-size-sm;
+      color: var(--text-secondary);
+    }
+
+    .close-btn {
+      color: var(--text-muted);
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $accent-rose;
+      }
+    }
+  }
+
+  .type-selector-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .w-100 {
+      width: 100%;
+    }
+
+    .hint {
+      padding: 2px 6px;
+      font-size: $font-size-sm;
+      color: var(--text-secondary);
+    }
+  }
+
+  .type-form-container {
+    flex: 1;
+    overflow-y: auto;
+    @include scrollbar-dark;
+    padding-right: 4px; // Avoid scrollbar overlap
+  }
+
+  .saving-overlay {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $space-md;
+    background: rgba($bg-root, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: $radius-xl;
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba($accent-indigo, 0.1);
+      border-top-color: $accent-indigo-light;
+      border-radius: 50%;
+      animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    span {
+      font-weight: $font-weight-semibold;
+      color: $accent-indigo-light;
+      letter-spacing: 0.05em;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

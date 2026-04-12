@@ -1,11 +1,13 @@
 import { Component, inject, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { StateService } from '../../shared/services/state.service';
+import { LiabilityService } from '../../shared/services/liability.service';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { AssetService } from '../../shared/services/asset.service';
 import type { EChartsOption } from 'echarts';
+import { NetworthService } from '../../shared/services/networth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,7 +18,9 @@ import type { EChartsOption } from 'echarts';
 })
 export class DashboardComponent {
   readonly state = inject(StateService);
+  readonly netWorthService = inject(NetworthService);
   readonly assetService = inject(AssetService);
+  readonly liabilityService = inject(LiabilityService);
 
   // ── Metric Cards ─────────────────────────────────────────────────────────
   readonly metrics = computed<MetricCardConfig[]>(() => {
@@ -24,15 +28,15 @@ export class DashboardComponent {
     return [
       {
         label: 'Net Worth',
-        value: d?.net_worth.net_worth ?? this.state.netWorth(),
+        value: this.netWorthService.networth(),
         format: 'currency',
         icon: 'account_balance',
         accentColor: '#6366f1',
-        subtitle: 'Total assets minus liabilities',
+        subtitle: '(Net Value) Total Assets minus Total Liabilities (debts, loans)',
       },
       {
         label: 'Monthly Cash Flow',
-        value: d?.cash_flow.monthly_cash_flow ?? this.state.monthlyCashFlow(),
+        value: d?.cash_flow?.monthly_cash_flow ?? this.state.monthlyCashFlow(),
         format: 'currency',
         icon: 'swap_vert',
         accentColor: '#06b6d4',
@@ -48,7 +52,7 @@ export class DashboardComponent {
       },
       {
         label: 'Emergency Fund',
-        value: d?.emergency_fund.months_covered ?? 0,
+        value: d?.emergency_fund?.months_covered ?? 0,
         format: 'months',
         icon: 'shield',
         accentColor: '#f59e0b',

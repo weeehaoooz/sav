@@ -2,7 +2,7 @@
   <app-page-header title="Assets" subtitle="Manage your financial assets" actionLabel="Add Asset" actionIcon="add"
     (actionClicked)="openCreate()" />
 
-  <div class="metrics-grid" style="margin-bottom: 24px;">
+  <div class="metrics-grid" style="margin-bottom: 24px; display: flex; align-items: stretch;">
     @for (m of metrics(); track m.label) {
     <app-metric-card [config]="m" />
     }
@@ -19,93 +19,8 @@
     <!-- Inline Form Panel -->
     @if (showForm()) {
     <div class="form-panel glass fade-in">
-      <div class="form-header">
-        <h4>{{ editingId() ? 'Update Asset Valuation' : 'New Asset' }}</h4>
-        <button mat-icon-button (click)="cancelForm()" id="close-asset-form-btn">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-
-      <form [formGroup]="assetForm" (ngSubmit)="save()" class="asset-form">
-        <mat-form-field appearance="fill">
-          <mat-label>Asset Name</mat-label>
-          <input matInput formControlName="name" placeholder="e.g. DBS Savings Account" id="asset-name-input" />
-        </mat-form-field>
-
-        <mat-form-field appearance="fill">
-          <mat-label>Latest Acquisition Date</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="valuation_date" id="asset-valuation-date-input">
-          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field appearance="fill">
-          <mat-label>Asset Type</mat-label>
-          <mat-select formControlName="asset_type" id="asset-type-select">
-            @for (t of assetTypes(); track t.value) {
-            <mat-option [value]="t.value">{{ t.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="fill">
-          <mat-label>Total Current Value (SGD)</mat-label>
-          <input matInput type="number" formControlName="current_value" id="asset-current-value-input"
-            [readonly]="assetForm.get('asset_type')?.value === 'cpf'" />
-          @if (assetForm.get('asset_type')?.value === 'cpf') {
-          <mat-hint>Sum of all CPF accounts below</mat-hint>
-          }
-        </mat-form-field>
-
-        @if (assetForm.get('asset_type')?.value === 'cpf') {
-        <div class="cpf-breakdown" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
-          <mat-form-field appearance="fill">
-            <mat-label>Ordinary Account (OA)</mat-label>
-            <input matInput type="number" formControlName="cpf_oa" id="asset-cpf-oa-input" />
-          </mat-form-field>
-          <mat-form-field appearance="fill">
-            <mat-label>Special Account (SA)</mat-label>
-            <input matInput type="number" formControlName="cpf_sa" id="asset-cpf-sa-input" />
-          </mat-form-field>
-          <mat-form-field appearance="fill">
-            <mat-label>Medisave Account (MA)</mat-label>
-            <input matInput type="number" formControlName="cpf_ma" id="asset-cpf-ma-input" />
-          </mat-form-field>
-          @if ((userService.selectedAccount()?.age ?? 0) >= 55) {
-          <mat-form-field appearance="fill">
-            <mat-label>Retirement Account (RA)</mat-label>
-            <input matInput type="number" formControlName="cpf_ra" id="asset-cpf-ra-input" />
-          </mat-form-field>
-          }
-        </div>
-        }
-
-        @if (isInvestment(assetForm.get('asset_type')?.value || '')) {
-        <mat-form-field appearance="fill">
-          <mat-label>Acquisition Value</mat-label>
-          <input matInput type="number" formControlName="acquisition_value" id="asset-acquisition-value-input" />
-        </mat-form-field>
-
-        <mat-form-field appearance="fill">
-          <mat-label>Currency</mat-label>
-          <mat-select formControlName="currency" id="asset-currency-select">
-            <mat-option value="SGD">SGD - Singapore Dollar</mat-option>
-            <mat-option value="USD">USD - US Dollar</mat-option>
-            <mat-option value="MYR">MYR - Malaysian Ringgit</mat-option>
-            <mat-option value="HKD">HKD - Hong Kong Dollar</mat-option>
-            <mat-option value="JPY">JPY - Japanese Yen</mat-option>
-          </mat-select>
-        </mat-form-field>
-        }
-
-        <div class="form-actions">
-          <button mat-button type="button" (click)="cancelForm()" id="asset-cancel-btn">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="assetForm.invalid || saving()"
-            id="asset-save-btn">
-            {{ saving() ? 'Saving…' : (editingId() ? 'Update' : 'Add Asset') }}
-          </button>
-        </div>
-      </form>
+      <app-asset-form [asset]="selectedAssetForEdit()" [saving]="saving()" (save)="handleSave($event)"
+        (cancel)="cancelForm()" />
     </div>
     }
   </div>

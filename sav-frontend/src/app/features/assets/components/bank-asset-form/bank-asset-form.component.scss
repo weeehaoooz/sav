@@ -1,0 +1,10 @@
+@use '../../../../../styles/variables' as *;
+@use '../asset-form/asset-forms' as *;
+
+.asset-type-form {
+  .section-header {
+    mat-icon {
+      color: $accent-cyan;
+    }
+  }
+}

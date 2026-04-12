@@ -1,0 +1,51 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+@use '../asset-form/asset-forms' as *;
+
+.asset-type-form {
+  .section-header {
+    mat-icon {
+      color: $accent-indigo-light;
+    }
+  }
+
+  // Icon coloring for the flat field list
+  mat-icon {
+    &.icon-oa { color: $accent-indigo; }
+    &.icon-sa { color: $accent-emerald; }
+    &.icon-ma { color: $accent-amber; }
+    &.icon-ra { color: $accent-rose; }
+  }
+
+  .total-summary {
+    position: relative;
+    margin-top: $space-md;
+    padding: $space-lg;
+    border-radius: $radius-xl;
+    text-align: center;
+    background: rgba($accent-indigo, 0.03);
+    border: 1px solid rgba($accent-indigo, 0.15);
+    overflow: hidden;
+
+    &.dot-grid {
+      background-image: radial-gradient(circle, rgba($accent-indigo, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .summary-label {
+      font-size: $font-size-xs;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: $font-weight-semibold;
+    }
+
+    .summary-value {
+      font-size: $font-size-2xl;
+      font-weight: $font-weight-bold;
+      color: $accent-indigo-light;
+      margin-top: $space-xs;
+      text-shadow: 0 0 20px rgba($accent-indigo, 0.3);
+    }
+  }
+}

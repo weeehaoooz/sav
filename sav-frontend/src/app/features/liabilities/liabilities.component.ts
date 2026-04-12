@@ -12,7 +12,7 @@ import { ColDef, GridReadyEvent, GridApi, ModuleRegistry, ClientSideRowModelModu
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule]);
 
-import { StateService } from '../../shared/services/state.service';
+import { LiabilityService } from '../../shared/services/liability.service';
 import { ApiService } from '../../shared/services/api.service';
 import { ThemeService } from '../../shared/services/theme.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -35,7 +35,7 @@ import type { EChartsOption } from 'echarts';
   styleUrls: ['./liabilities.component.scss'],
 })
 export class LiabilitiesComponent {
-  readonly state = inject(StateService);
+  readonly liabilityService = inject(LiabilityService);
   private readonly api = inject(ApiService);
   private readonly themeService = inject(ThemeService);
   private readonly snackbar = inject(MatSnackBar);
@@ -96,8 +96,8 @@ export class LiabilitiesComponent {
   readonly defaultColDef: ColDef = { sortable: true, resizable: true };
 
   readonly metrics = computed<MetricCardConfig[]>(() => [
-    { label: 'Total Debt', value: this.state.totalLiabilityValue(), format: 'currency', icon: 'credit_card', accentColor: '#f43f5e' },
-    { label: 'Debt Instruments', value: this.state.liabilities().length, format: 'number', icon: 'list', accentColor: '#f59e0b' },
+    { label: 'Total Debt', value: this.liabilityService.totalLiabilityValue(), format: 'currency', icon: 'credit_card', accentColor: '#f43f5e' },
+    { label: 'Debt Instruments', value: this.liabilityService.liabilities().length, format: 'number', icon: 'list', accentColor: '#f59e0b' },
   ]);
 
   readonly amortChart = computed<EChartsOption>(() => {
@@ -137,7 +137,7 @@ export class LiabilitiesComponent {
     const obs = id ? this.api.updateLiability(id, data) : this.api.createLiability(data);
     obs.subscribe({
       next: (l) => {
-        if (id) this.state.updateLiability(l); else this.state.addLiability(l);
+        if (id) this.liabilityService.updateLiability(l); else this.liabilityService.addLiability(l);
         this.showForm.set(false);
         this.saving.set(false);
         this.snackbar.open(id ? 'Updated' : 'Added', 'Close', { duration: 3000 });
@@ -148,7 +148,7 @@ export class LiabilitiesComponent {
 
   deleteLiability(id: number): void {
     this.api.deleteLiability(id).subscribe({
-      next: () => { this.state.removeLiability(id); this.snackbar.open('Deleted', 'Close', { duration: 3000 }); },
+      next: () => { this.liabilityService.removeLiability(id); this.snackbar.open('Deleted', 'Close', { duration: 3000 }); },
     });
   }
 

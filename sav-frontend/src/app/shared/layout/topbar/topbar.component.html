@@ -6,7 +6,7 @@
     <div class="net-worth-chip glass">
       <span class="nw-label">Net Worth</span>
       <span class="nw-value number-mono">
-        {{ state.netWorth() | currency:'SGD':'symbol':'1.0-0' }}
+        {{ netWorthService.networth() | currency:'SGD':'symbol':'1.0-0' }}
       </span>
     </div>
 

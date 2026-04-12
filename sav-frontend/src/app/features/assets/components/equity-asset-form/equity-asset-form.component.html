@@ -1,0 +1,56 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="asset-type-form fade-in">
+  <div class="form-container">
+    <div class="section-header">
+      <mat-icon>trending_up</mat-icon>
+      <h3>Investment Details</h3>
+    </div>
+
+    <div class="form-grid">
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Investment Name</mat-label>
+        <input matInput formControlName="name" placeholder="e.g. S&P 500 ETF (VOO)" id="equity-name-input" />
+      </mat-form-field>
+
+      <div class="row">
+        <mat-form-field appearance="fill" class="flex-2">
+          <mat-label>Current Value</mat-label>
+          <input matInput type="number" formControlName="current_value" id="equity-current-value-input" />
+          <mat-icon matPrefix>attach_money</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="flex-1">
+          <mat-label>CCY</mat-label>
+          <mat-select formControlName="currency" id="equity-currency-select">
+            <mat-option value="SGD">SGD</mat-option>
+            <mat-option value="USD">USD</mat-option>
+            <mat-option value="MYR">MYR</mat-option>
+            <mat-option value="HKD">HKD</mat-option>
+            <mat-option value="JPY">JPY</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Acquisition / Cost Value</mat-label>
+        <input matInput type="number" formControlName="acquisition_value" id="equity-cost-input" />
+        <mat-icon matPrefix>history_edu</mat-icon>
+        <mat-hint>The total amount you paid for this asset</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Valuation Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="valuation_date" id="equity-date-input">
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-icon matPrefix>calendar_today</mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="cancel.emit()" id="equity-cancel-btn">Cancel</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid" id="equity-save-btn">
+      Save Investment
+    </button>
+  </div>
+</form>

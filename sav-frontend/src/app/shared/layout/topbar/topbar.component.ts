@@ -5,6 +5,7 @@ import { UserService } from '../../services/user.service';
 import { CurrencyPipe, UpperCasePipe, CommonModule, TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Account } from '../../models/account.model';
+import { NetworthService } from '../../services/networth.service';
 
 @Component({
   selector: 'app-topbar',
@@ -24,6 +25,7 @@ export class TopbarComponent {
   readonly auth = inject(AuthService);
   readonly userService = inject(UserService);
   private readonly eRef = inject(ElementRef);
+  readonly netWorthService = inject(NetworthService);
 
   isMenuOpen = signal(false);
 

@@ -2,7 +2,6 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Account } from '../models/account.model';
 import { Asset } from '../models/asset.model';
-import { Liability } from '../models/liability.model';
 import { Income } from '../models/income.model';
 import { Expense } from '../models/expense.model';
 import { DashboardSummary } from '../models/dashboard.model';
@@ -14,12 +13,14 @@ import { DashboardSummary } from '../models/dashboard.model';
  */
 import { AuthService } from './auth.service';
 import { AssetService } from './asset.service';
+import { LiabilityService } from './liability.service';
 
 @Injectable({ providedIn: 'root' })
 export class StateService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly assetService = inject(AssetService);
+  private readonly liabilityService = inject(LiabilityService);
 
   constructor() {
     if (this.auth.isAuthenticated()) {
@@ -31,14 +32,6 @@ export class StateService {
   readonly assets = this.assetService.assets;
   readonly totalAssetValue = this.assetService.totalAssetValue;
   readonly assetsByType = this.assetService.assetsByType;
-
-  // ── Liabilities ───────────────────────────────────────────────────────────
-  private _liabilities = signal<Liability[]>([]);
-  readonly liabilities = this._liabilities.asReadonly();
-
-  readonly totalLiabilityValue = computed(() =>
-    this._liabilities().reduce((sum, l) => sum + (Number(l.outstanding_balance) || 0), 0)
-  );
 
   // ── Income ────────────────────────────────────────────────────────────────
   private _income = signal<Income[]>([]);
@@ -65,14 +58,13 @@ export class StateService {
   readonly error = signal<string | null>(null);
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  readonly netWorth = computed(() => this.totalAssetValue() - this.totalLiabilityValue());
   readonly monthlyCashFlow = computed(() => this.totalMonthlyIncome() - this.totalMonthlyExpenses());
 
   // ── Loaders ───────────────────────────────────────────────────────────────
   loadAll(): void {
     this.loading.set(true);
     this.assetService.loadAssets();
-    this.api.getLiabilities().subscribe(data => this._liabilities.set(data));
+    this.liabilityService.loadLiabilities();
     this.api.getIncome().subscribe(data => this._income.set(data));
     this.api.getExpenses().subscribe(data => this._expenses.set(data));
     this.api.getDashboardSummary().subscribe({
@@ -89,17 +81,6 @@ export class StateService {
   addAsset(asset: Asset): void { this.assetService.addAsset(asset); }
   updateAsset(updated: Asset): void { this.assetService.updateAsset(updated); }
   removeAsset(id: number): void { this.assetService.removeAsset(id); }
-
-  // ── Mutations — Liabilities ────────────────────────────────────────────
-  addLiability(l: Liability): void {
-    this._liabilities.update(list => [l, ...list]);
-  }
-  updateLiability(updated: Liability): void {
-    this._liabilities.update(list => list.map(l => l.id === updated.id ? updated : l));
-  }
-  removeLiability(id: number): void {
-    this._liabilities.update(list => list.filter(l => l.id !== id));
-  }
 
   // ── Mutations — Income ────────────────────────────────────────────────
   addIncome(item: Income): void {

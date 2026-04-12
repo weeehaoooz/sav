@@ -48,6 +48,13 @@ body {
     transition: var(--input-transition);
   }
 
+  // Padding fixes for compact design
+  .mdc-text-field--outlined .mat-mdc-form-field-infix,
+  .mdc-text-field--no-label .mat-mdc-form-field-infix {
+    padding-bottom: 0 !important;
+    padding-top: 16px !important; // Ensure vertical centering
+  }
+
   // ── Outline variant (used in login + modals) ────────────────────────────
   .mdc-text-field--outlined {
 
@@ -187,11 +194,119 @@ body {
   box-shadow: $shadow-lg !important;
 }
 
-// Select
+// Select & Options
 .mat-mdc-select-panel {
-  background: #111827 !important;
-  border: 1px solid $border-subtle !important;
+  background: rgba($bg-secondary, 0.9) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid $border-medium !important;
   border-radius: $radius-md !important;
+  box-shadow: $shadow-lg !important;
+  padding: $space-xs 0 !important;
+  margin-top: 4px;
+  animation: selectPanelAppear 0.2s cubic-bezier(0, 0, 0.2, 1);
+
+  @include scrollbar-dark;
+}
+
+@keyframes selectPanelAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Shared layout for Select Trigger and Options
+.select-trigger-content,
+.option-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: $space-sm !important;
+  height: 100%;
+
+  mat-icon {
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--text-secondary);
+    opacity: 0.9;
+    margin: 0 !important;
+  }
+
+  span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    line-height: 1;
+  }
+}
+
+// Fix alignment in the closed select trigger
+.mat-mdc-select-trigger {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+.mat-mdc-option {
+  min-height: 48px !important;
+  padding: 0 $space-md !important;
+  transition: background $transition-fast;
+  position: relative;
+
+  .mdc-list-item__primary-text {
+    flex: 1;
+    display: flex !important;
+    align-items: center !important;
+    color: var(--text-secondary) !important;
+    font-size: $font-size-sm !important;
+    font-weight: $font-weight-medium !important;
+  }
+
+  // Custom hover accent
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: $accent-indigo;
+    transition: height $transition-fast;
+    border-radius: 0 4px 4px 0;
+  }
+
+  &:hover:not(.mdc-list-item--disabled) {
+    background: rgba($accent-indigo, 0.08) !important;
+
+    .mdc-list-item__primary-text {
+      color: var(--text-primary) !important;
+    }
+
+    &::before {
+      height: 60%;
+    }
+  }
+
+  &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background: rgba($accent-indigo, 0.12) !important;
+
+    .mdc-list-item__primary-text {
+      color: $accent-indigo-light !important;
+      font-weight: $font-weight-semibold !important;
+    }
+
+    &::before {
+      height: 100%;
+    }
+  }
 }
 
 // Tabs
@@ -204,6 +319,11 @@ body {
 }
 
 // ─── Layout utilities ────────────────────────────────────────────────────────
+.w-100,
+.w-full {
+  width: 100% !important;
+}
+
 .page-content {
   padding: $space-xl;
   max-width: $content-max-width;
