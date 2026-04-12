@@ -100,7 +100,8 @@ export class AssetsComponent implements OnInit {
       valueFormatter: p => `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`,
     },
     {
-      field: 'gain_loss', headerName: 'Gain/Loss', flex: 1, type: 'rightAligned',
+      field: 'ytd_gain_loss', headerName: 'YTD Gain/Loss', flex: 1, type: 'rightAligned',
+      tooltipValueGetter: () => 'Year-to-Date Change: Compares current value to the earliest entry of this year.',
       cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
       valueFormatter: p => {
         const assetType = p.data?.asset_type;
@@ -124,7 +125,7 @@ export class AssetsComponent implements OnInit {
       cellRenderer: (p: any) => `
         <div style="display:flex;gap:4px;align-items:center;height:100%">
           <button id="history-${p.data.id}" style="background:rgba(52,211,153,0.12);border:none;color:#34d399;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">History</button>
-          <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Edit</button>
+          <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Update</button>
           <button id="del-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
         </div>`,
       onCellClicked: (p) => {
@@ -151,8 +152,8 @@ export class AssetsComponent implements OnInit {
       accentColor: '#6366f1',
     },
     {
-      label: 'Total Gain/Loss',
-      value: this.assetService.assets().reduce((s, a) => s + a.gain_loss, 0),
+      label: 'Total YTD Gain/Loss',
+      value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
       format: 'currency',
       icon: 'trending_up',
       accentColor: '#10b981',

@@ -1,6 +1,6 @@
-export type AssetType = 
-  | 'bank' 
-  | 'equity' 
+export type AssetType =
+  | 'bank'
+  | 'equity'
   | 'cpf';
 
 export interface AssetOwnership {
@@ -23,6 +23,8 @@ export interface Asset {
   cpf_ma: number;
   cpf_ra: number;
   ownerships: AssetOwnership[];
+  ytd_gain_loss: number;
+  ytd_gain_loss_pct: number;
   gain_loss: number;
   gain_loss_pct: number;
   created_at: string;
