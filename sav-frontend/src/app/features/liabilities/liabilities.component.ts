@@ -73,7 +73,7 @@ export class LiabilitiesComponent {
     { field: 'name', headerName: 'Liability', flex: 2 },
     { field: 'liability_type', headerName: 'Type', flex: 1, valueFormatter: p => this.liabilityTypes.find(t => t.value === p.value)?.label ?? p.value },
     { field: 'owner_name', headerName: 'Owner', flex: 1 },
-    { field: 'outstanding_balance', headerName: 'Balance', flex: 1, type: 'rightAligned', valueFormatter: p => `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`, cellStyle: { color: '#fb7185' } },
+    { field: 'outstanding_balance', headerName: 'Balance', flex: 1, type: 'rightAligned', valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, cellStyle: { color: '#fb7185' } },
     { field: 'interest_rate', headerName: 'Rate', flex: 0.8, valueFormatter: p => `${((p.value ?? 0) * 100).toFixed(2)}%` },
     { field: 'tenure_months', headerName: 'Tenure', flex: 0.8, valueFormatter: p => `${p.value} mo` },
     {
@@ -104,7 +104,19 @@ export class LiabilitiesComponent {
     const data = this.amortisationData();
     return {
       backgroundColor: 'transparent',
-      tooltip: { trigger: 'axis', backgroundColor: '#1e2740', borderColor: 'rgba(255,255,255,0.08)', textStyle: { color: '#f0f4ff', fontFamily: 'Inter' } },
+      tooltip: { 
+        trigger: 'axis', 
+        backgroundColor: '#1e2740', 
+        borderColor: 'rgba(255,255,255,0.08)', 
+        textStyle: { color: '#f0f4ff', fontFamily: 'Inter' },
+        formatter: (params: any) => {
+          let res = `Period ${params[0].axisValue}<br/>`;
+          params.forEach((p: any) => {
+            res += `${p.marker} ${p.seriesName}: SGD ${Number(p.value || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br/>`;
+          });
+          return res;
+        }
+      },
       legend: { data: ['Principal', 'Interest', 'Balance'], textStyle: { color: '#8b9cc8', fontSize: 11 } },
       xAxis: { type: 'category', data: data.map(d => `P${d.period}`), axisLabel: { color: '#8b9cc8', fontSize: 10 }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
       yAxis: { type: 'value', axisLabel: { color: '#8b9cc8', fontSize: 10, formatter: (v: number) => `$${(v / 1000).toFixed(0)}k` }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },

@@ -11,6 +11,10 @@
   </div>
   <div class="assets-container">
     <div class="assets-toolbar">
+      <div class="toolbar-info">
+        <span class="count">{{ assetService.assets().length }}</span>
+        <span class="label">Assets</span>
+      </div>
       <button mat-stroked-button [color]="isQuickEdit() ? 'primary' : ''" (click)="toggleQuickEdit()"
         [matTooltip]="isQuickEdit() ? 'Disable quick editing' : 'Enable direct grid editing'">
         <mat-icon>{{ isQuickEdit() ? 'edit_off' : 'bolt' }}</mat-icon>

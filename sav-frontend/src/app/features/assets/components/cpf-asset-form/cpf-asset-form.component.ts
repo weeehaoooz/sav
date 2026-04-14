@@ -60,9 +60,10 @@ export class CpfAssetFormComponent implements OnInit {
 
   ngOnInit() {
     this.form.valueChanges.subscribe(val => {
-      const total = (val.cpf_oa || 0) + (val.cpf_sa || 0) + (val.cpf_ma || 0) + (val.cpf_ra || 0);
-      if (this.form.get('current_value')?.value !== total) {
-        this.form.get('current_value')?.setValue(total, { emitEvent: false });
+      const total = Number(val.cpf_oa || 0) + Number(val.cpf_sa || 0) + Number(val.cpf_ma || 0) + Number(val.cpf_ra || 0);
+      const roundedTotal = Math.round(total * 100) / 100;
+      if (this.form.get('current_value')?.value !== roundedTotal) {
+        this.form.get('current_value')?.setValue(roundedTotal, { emitEvent: false });
       }
     });
   }
@@ -73,7 +74,15 @@ export class CpfAssetFormComponent implements OnInit {
 
   onSubmit() {
     if (this.form.valid) {
-      const data = { ...this.form.value };
+      const rawValue = this.form.value;
+      const data = {
+        ...rawValue,
+        cpf_oa: Number(rawValue.cpf_oa || 0),
+        cpf_sa: Number(rawValue.cpf_sa || 0),
+        cpf_ma: Number(rawValue.cpf_ma || 0),
+        cpf_ra: Number(rawValue.cpf_ra || 0),
+        current_value: Number(rawValue.current_value || 0)
+      };
       this.save.emit(data);
     }
   }

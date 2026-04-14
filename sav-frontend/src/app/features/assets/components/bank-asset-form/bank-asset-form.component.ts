@@ -51,7 +51,12 @@ export class BankAssetFormComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      this.save.emit(this.form.value);
+      const rawValue = this.form.value;
+      const data = {
+        ...rawValue,
+        current_value: Number(rawValue.current_value || 0)
+      };
+      this.save.emit(data);
     }
   }
 }

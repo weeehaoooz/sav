@@ -114,7 +114,12 @@ export class AssetsComponent implements OnInit {
       },
       tooltipValueGetter: p => {
         if (!p.data?.isVirtualChild && p.data?.asset_type === 'cpf') {
-          return `OA: $${p.data.cpf_oa.toLocaleString()} | SA: $${p.data.cpf_sa.toLocaleString()} | MA: $${p.data.cpf_ma.toLocaleString()}${p.data.cpf_ra > 0 ? ' | RA: $' + p.data.cpf_ra.toLocaleString() : ''}`;
+          const cfg = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+          const oa = Number(p.data.cpf_oa || 0).toLocaleString('en-SG', cfg);
+          const sa = Number(p.data.cpf_sa || 0).toLocaleString('en-SG', cfg);
+          const ma = Number(p.data.cpf_ma || 0).toLocaleString('en-SG', cfg);
+          const ra = Number(p.data.cpf_ra || 0).toLocaleString('en-SG', cfg);
+          return `OA: $${oa} | SA: $${sa} | MA: $${ma}${p.data.cpf_ra > 0 ? ' | RA: $' + ra : ''}`;
         }
         return '';
       }
@@ -123,20 +128,41 @@ export class AssetsComponent implements OnInit {
       field: 'current_value', headerName: 'Current Value', flex: 1.2, type: 'rightAligned',
       editable: (p) => this.isQuickEdit() && (p.data?.asset_type !== 'cpf' || p.data?.isVirtualChild),
       cellClass: (p) => this.isQuickEdit() && (p.data?.asset_type !== 'cpf' || p.data?.isVirtualChild) ? 'editable-cell' : '',
-      valueFormatter: p => p.data?.isVirtualChild ?
-        `(SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })})` :
-        `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`,
+      valueFormatter: p => {
+        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return p.data?.isVirtualChild ? `(SGD ${val})` : `SGD ${val}`;
+      },
     },
     {
       field: 'ytd_gain_loss', headerName: 'Gains and Loss (YTD)', flex: 1.2, type: 'rightAligned',
-      tooltipValueGetter: () => 'Year-to-Date Change: Compares current value to the earliest entry of this year.',
+      tooltipValueGetter: () => 'Year-to-Date Performance: Total value change minus any increases in acquisition costs (contributions) since start of year.',
       cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
       valueFormatter: p => {
         if (p.data?.isVirtualChild) return '';
-        const v = p.value ?? 0;
+        const v = Number(p.value ?? 0);
         const currency = p.data?.currency || 'SGD';
-        return `${v >= 0 ? '+' : ''}${currency} ${Math.abs(v).toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
+        const formatted = Math.abs(v).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return `${v >= 0 ? '+' : ''}${currency} ${formatted}`;
       },
+    },
+    {
+      headerName: 'ROI', flex: 0.8, type: 'rightAligned',
+      valueGetter: p => {
+        if (p.data?.isVirtualChild) return null;
+        const current = p.data?.current_value || 0;
+        const acq = p.data?.acquisition_value || 0;
+        if (acq <= 0) return null;
+        return ((current - acq) / acq) * 100;
+      },
+      valueFormatter: p => {
+        if (p.value == null) return '—';
+        return `${p.value >= 0 ? '+' : ''}${p.value.toFixed(2)}%`;
+      },
+      cellStyle: p => ({
+        color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185',
+        fontWeight: '600'
+      }),
+      tooltipValueGetter: () => 'Return on Investment: (Current Value - Acquisition Cost) / Acquisition Cost',
     },
     {
       field: 'valuation_date', headerName: 'Valuation Date', flex: 1,
@@ -188,6 +214,14 @@ export class AssetsComponent implements OnInit {
         subtitle: '(Net Value) Total Assets minus Total Liabilities (debts, loans)',
       },
       {
+        label: 'YTD Networth Gain/Loss',
+        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
+        format: 'currency',
+        icon: 'trending_up',
+        accentColor: '#818cf8',
+        subtitle: '(Performance) Organic change in net worth since start of year',
+      },
+      {
         label: 'Total Assets',
         value: this.assetService.totalAssetValue(),
         format: 'currency',
@@ -201,15 +235,7 @@ export class AssetsComponent implements OnInit {
         format: 'currency',
         icon: 'trending_up',
         accentColor: '#10b981',
-        subtitle: '(Performance) Total value change since start of year',
-      },
-      {
-        label: 'Asset Count',
-        value: this.assetService.assets().length,
-        format: 'number',
-        icon: 'list',
-        accentColor: '#f59e0b',
-        subtitle: '(Portfolio) Total number of individual assets',
+        subtitle: '(Performance) Organic change since start of year, excluding contributions',
       },
     ];
   });

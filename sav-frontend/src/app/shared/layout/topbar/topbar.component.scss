@@ -12,9 +12,11 @@
   align-items: center;
   justify-content: space-between;
   background: rgba(8, 13, 28, 0.6);
+
   :host-context(body.light-theme) & {
     background: rgba(255, 255, 255, 0.75);
   }
+
   backdrop-filter: blur(16px);
   border-bottom: 1px solid $border-subtle;
   position: sticky;

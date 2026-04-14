@@ -18,7 +18,42 @@
 
   .assets-toolbar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+
+    .toolbar-info {
+      display: flex;
+      align-items: center;
+      gap: $space-xs;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: color-mix(in srgb, $accent-indigo 10%, transparent);
+      border: 1px solid color-mix(in srgb, $accent-indigo 20%, transparent);
+      transition: $transition-fast;
+
+      &:hover {
+        background: color-mix(in srgb, $accent-indigo 15%, transparent);
+        border-color: color-mix(in srgb, $accent-indigo 30%, transparent);
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #f59e0b; // Match the original accent color
+      }
+
+      .count {
+        font-weight: $font-weight-bold;
+        font-size: $font-size-base;
+      }
+
+      .label {
+        font-size: $font-size-sm;
+        color: $text-secondary;
+      }
+    }
   }
 
   .assets-grid {

@@ -12,7 +12,7 @@ class AssetValuationHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AssetValuationHistory
         fields = [
-            'id', 'asset', 'valuation_date', 'current_value',
+            'id', 'asset', 'valuation_date', 'current_value', 'acquisition_value',
             'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra', 'created_at'
         ]
 
@@ -35,7 +35,7 @@ class AssetSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['created_at', 'updated_at']
 
-    def get_base_value_for_ytd(self, obj):
+    def get_base_record_for_ytd(self, obj):
         current_year = timezone.now().year
         # Query DB directly to bypass prefetch cache and ensure we see new entries
         all_history = AssetValuationHistory.objects.filter(asset=obj).order_by('valuation_date', 'created_at')
@@ -46,24 +46,46 @@ class AssetSerializer(serializers.ModelSerializer):
         previous_year_entries = [h for h in history_list if h.valuation_date.year < current_year]
         if previous_year_entries:
             # They are already ordered by date ascending, so the last one is the latest of the previous years
-            return previous_year_entries[-1].current_value
+            return previous_year_entries[-1]
 
         # 2. Fallback to the earliest valuation of the current year
         this_year_entries = [h for h in history_list if h.valuation_date.year == current_year]
         if this_year_entries:
-            return this_year_entries[0].current_value
+            return this_year_entries[0]
 
-        # 3. Fallback to acquisition value
-        return obj.acquisition_value or float(0)
+        # 3. Fallback to a mock object with acquisition value as base
+        return None
 
     def get_ytd_gain_loss(self, obj):
-        base_value = self.get_base_value_for_ytd(obj)
-        return float(obj.current_value) - float(base_value)
+        base_record = self.get_base_record_for_ytd(obj)
+        
+        # Determine base value and base acquisition cost
+        if base_record and base_record.valuation_date < obj.valuation_date:
+            base_value = float(base_record.current_value)
+            base_acq = float(base_record.acquisition_value)
+        else:
+            # Fallback for new assets or assets with only one valuation today:
+            # Compare current state to the initial acquisition cost.
+            base_value = float(obj.acquisition_value)
+            base_acq = float(obj.acquisition_value)
+
+        # Formula: (Current Value - Base Value) - (Current Acquisition - Base Acquisition)
+        value_change = float(obj.current_value) - base_value
+        acq_change = float(obj.acquisition_value) - base_acq
+        return value_change - acq_change
 
     def get_ytd_gain_loss_pct(self, obj):
-        base_value = float(self.get_base_value_for_ytd(obj))
-        if base_value != 0:
-            return float((float(obj.current_value) - base_value) / base_value * 100)
+        base_record = self.get_base_record_for_ytd(obj)
+        
+        if base_record and base_record.valuation_date < obj.valuation_date:
+            base_value = float(base_record.current_value)
+        else:
+            base_value = float(obj.acquisition_value)
+
+        gain_loss = self.get_ytd_gain_loss(obj)
+        denominator = base_value
+        if denominator != 0:
+            return (gain_loss / denominator) * 100
         return 0.0
 
     def get_gain_loss(self, obj):

@@ -77,9 +77,9 @@ export class IncomeComponent {
     { field: 'name', headerName: 'Income Source', flex: 2 },
     { field: 'income_type', headerName: 'Type', flex: 1, valueFormatter: p => this.incomeTypes.find(t => t.value === p.value)?.label ?? p.value },
     { field: 'account_name', headerName: 'Account', flex: 1 },
-    { field: 'amount', headerName: 'Amount', flex: 1, type: 'rightAligned', valueFormatter: p => `SGD ${(p.value ?? 0).toLocaleString()}` },
+    { field: 'amount', headerName: 'Amount', flex: 1, type: 'rightAligned', valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
     { field: 'frequency', headerName: 'Frequency', flex: 1 },
-    { field: 'monthly_equivalent', headerName: 'Monthly', flex: 1, type: 'rightAligned', cellStyle: { color: '#34d399' }, valueFormatter: p => `SGD ${(p.value ?? 0).toLocaleString('en-SG', { maximumFractionDigits: 0 })}` },
+    { field: 'monthly_equivalent', headerName: 'Monthly', flex: 1, type: 'rightAligned', cellStyle: { color: '#34d399' }, valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
     {
       headerName: 'Actions', flex: 0.8, sortable: false,
       cellRenderer: (p: any) => `

@@ -73,7 +73,10 @@ export class DashboardComponent {
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
-        formatter: '{b}: ${c} ({d}%)',
+        formatter: (params: any) => {
+          const val = Number(params.value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          return `${params.name}: SGD ${val} (${params.percent}%)`;
+        },
         backgroundColor: '#1e2740',
         borderColor: 'rgba(255,255,255,0.08)',
         textStyle: { color: '#f0f4ff', fontFamily: 'Inter' },

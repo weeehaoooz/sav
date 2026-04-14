@@ -27,7 +27,7 @@ export class MetricCardComponent {
     if (format === 'currency') return null; // handled by CurrencyPipe in template
     if (format === 'percent') return `${value.toFixed(0)}%`;
     if (format === 'months') return `${value.toFixed(0)} mo`;
-    return value.toLocaleString('en-SG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return Number(value).toLocaleString('en-SG');
   });
 
   readonly isCurrency = computed(() => this.config().format === 'currency');

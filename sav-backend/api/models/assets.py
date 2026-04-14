@@ -69,6 +69,7 @@ class Asset(models.Model):
                 asset=self,
                 valuation_date=self.valuation_date,
                 current_value=self.current_value,
+                acquisition_value=self.acquisition_value,
                 cpf_oa=self.cpf_oa,
                 cpf_sa=self.cpf_sa,
                 cpf_ma=self.cpf_ma,
@@ -94,6 +95,7 @@ class Asset(models.Model):
                     asset=self,
                     valuation_date=self.valuation_date,
                     current_value=self.current_value,
+                    acquisition_value=self.acquisition_value,
                     cpf_oa=self.cpf_oa,
                     cpf_sa=self.cpf_sa,
                     cpf_ma=self.cpf_ma,
@@ -141,6 +143,7 @@ class AssetValuationHistory(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='valuation_history')
     valuation_date = models.DateField()
     current_value = models.DecimalField(max_digits=15, decimal_places=2)
+    acquisition_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     
     # Snapshot of CPF sub-accounts if applicable
     cpf_oa = models.DecimalField(max_digits=15, decimal_places=2, default=0)

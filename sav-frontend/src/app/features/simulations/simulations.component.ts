@@ -70,7 +70,7 @@ export class SimulationsComponent {
         textStyle: { color: '#f0f4ff', fontFamily: 'Inter' },
         formatter: (params: any) => {
           const d = params[0].data;
-          return `Age ${params[0].axisValue}<br/>Net Worth: SGD ${d.toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
+          return `Age ${params[0].axisValue}<br/>Net Worth: SGD ${Number(d).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         },
       },
       xAxis: {

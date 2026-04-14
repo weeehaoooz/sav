@@ -36,6 +36,7 @@ export interface AssetValuationHistory {
   asset: number;
   valuation_date: string;
   current_value: number;
+  acquisition_value: number;
   cpf_oa: number;
   cpf_sa: number;
   cpf_ma: number;

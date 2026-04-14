@@ -49,22 +49,22 @@ export class AssetHistoryDialogComponent implements OnInit {
     {
       field: 'valuation_date',
       headerName: 'Date',
-      flex: 1.2,
+      flex: 1,
       sort: 'desc',
       valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
     },
     {
       field: 'current_value',
       headerName: 'Value',
-      flex: 1.5,
+      flex: 1.3,
       cellRenderer: (p: any) => {
-        const val = (p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const currency = this.data.asset.currency;
         if (this.data.asset.asset_type === 'cpf') {
           return `
             <div class="cpf-cell-breakdown">
               <span class="main-val">${currency} ${val}</span>
-              <span class="sub-vals">OA: ${p.data.cpf_oa?.toLocaleString() || 0} | SA: ${p.data.cpf_sa?.toLocaleString() || 0} | MA: ${p.data.cpf_ma?.toLocaleString() || 0}</span>
+              <span class="sub-vals">OA: ${Number(p.data.cpf_oa || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | SA: ${Number(p.data.cpf_sa || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | MA: ${Number(p.data.cpf_ma || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           `;
         }
@@ -72,14 +72,45 @@ export class AssetHistoryDialogComponent implements OnInit {
       }
     },
     {
+      field: 'acquisition_value',
+      headerName: 'Acquisition',
+      flex: 1.3,
+      hide: this.data.asset.asset_type === 'bank' || this.data.asset.asset_type === 'cpf',
+      cellRenderer: (p: any) => {
+        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const currency = this.data.asset.currency;
+        return `<span style="font-weight: 400; color: var(--text-secondary)">${currency} ${val}</span>`;
+      }
+    },
+    {
+      headerName: 'Net G/L',
+      flex: 1.2,
+      hide: this.data.asset.asset_type === 'bank' || this.data.asset.asset_type === 'cpf',
+      valueGetter: (p) => (p.data?.current_value || 0) - (p.data?.acquisition_value || 0),
+      cellRenderer: (p: any) => {
+        const val = p.value;
+        const formatted = Number(Math.abs(val)).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const currency = this.data.asset.currency;
+        const color = val >= 0 ? '#10b981' : '#f43f5e';
+        const icon = val >= 0 ? 'trending_up' : 'trending_down';
+        const prefix = val >= 0 ? '+' : '-';
+        return `
+          <div style="display: flex; align-items: center; gap: 4px; color: ${color}; font-weight: 600">
+            <span class="material-icons" style="font-size: 14px">${icon}</span>
+            <span>${prefix}${currency} ${formatted}</span>
+          </div>
+        `;
+      }
+    },
+    {
       headerName: '',
-      width: 110,
+      width: 100,
       suppressHeaderMenuButton: true,
       sortable: false,
       cellRenderer: (p: any) => `
         <div style="display:flex;align-items:center;justify-content:center;height:100%">
           <button id="del-hist-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px">
-            <span class="material-icons" style="font-size:14px">delete</span> Delete
+            <span class="material-icons" style="font-size:14px">delete</span>
           </button>
         </div>`,
       onCellClicked: (p) => {
@@ -145,7 +176,7 @@ export class AssetHistoryDialogComponent implements OnInit {
           const p = params[0];
           return `<div style="padding: 4px">
             <div style="font-size: 11px; margin-bottom: 4px; color: ${textColor}">${p.name}</div>
-            <div style="font-weight: 600">${this.data.asset.currency} ${p.value.toLocaleString()}</div>
+            <div style="font-weight: 600">${this.data.asset.currency} ${Number(p.value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </div>`;
         }
       },
