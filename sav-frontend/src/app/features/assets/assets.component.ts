@@ -134,7 +134,7 @@ export class AssetsComponent implements OnInit {
       },
     },
     {
-      field: 'ytd_gain_loss', headerName: 'Gains and Loss (YTD)', flex: 1.2, type: 'rightAligned',
+      field: 'ytd_gain_loss', headerName: 'Investment +/- (YTD)', flex: 1.2, type: 'rightAligned',
       tooltipValueGetter: () => 'Year-to-Date Performance: Total value change minus any increases in acquisition costs (contributions) since start of year.',
       cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
       valueFormatter: p => {
@@ -215,11 +215,11 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'YTD Networth Gain/Loss',
-        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
+        value: this.state.assets().reduce((s, a) => s + (a.ytd_networth_gain || 0), 0),
         format: 'currency',
         icon: 'trending_up',
         accentColor: '#818cf8',
-        subtitle: '(Performance) Organic change in net worth since start of year',
+        subtitle: '(Total Change) Includes investment growth and capital contributions',
       },
       {
         label: 'Total Assets',
@@ -231,11 +231,11 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'Total YTD Gain/Loss',
-        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
+        value: this.state.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
         format: 'currency',
-        icon: 'trending_up',
+        icon: 'show_chart',
         accentColor: '#10b981',
-        subtitle: '(Performance) Organic change since start of year, excluding contributions',
+        subtitle: '(Performance) Investment returns only, excluding contributions',
       },
     ];
   });

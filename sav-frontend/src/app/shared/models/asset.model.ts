@@ -25,6 +25,7 @@ export interface Asset {
   ownerships: AssetOwnership[];
   ytd_gain_loss: number;
   ytd_gain_loss_pct: number;
+  ytd_networth_gain: number;
   gain_loss: number;
   gain_loss_pct: number;
   created_at: string;

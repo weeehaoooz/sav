@@ -22,6 +22,7 @@ class AssetSerializer(serializers.ModelSerializer):
     ownerships = AssetOwnershipSerializer(many=True, read_only=True)
     ytd_gain_loss = serializers.SerializerMethodField()
     ytd_gain_loss_pct = serializers.SerializerMethodField()
+    ytd_networth_gain = serializers.SerializerMethodField()
     gain_loss = serializers.SerializerMethodField()
     gain_loss_pct = serializers.SerializerMethodField()
 
@@ -31,7 +32,7 @@ class AssetSerializer(serializers.ModelSerializer):
             'id', 'name', 'asset_type', 'current_value', 'acquisition_value',
             'currency', 'valuation_date', 'ownerships',
             'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra',
-            'ytd_gain_loss', 'ytd_gain_loss_pct', 'gain_loss', 'gain_loss_pct', 'created_at', 'updated_at'
+            'ytd_gain_loss', 'ytd_gain_loss_pct', 'ytd_networth_gain', 'gain_loss', 'gain_loss_pct', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -57,14 +58,19 @@ class AssetSerializer(serializers.ModelSerializer):
         return None
 
     def get_ytd_gain_loss(self, obj):
+        # 1. Performance metrics should exclude cash/bank and CPF accounts as they are not 
+        # market-driven investments in this context.
+        if obj.asset_type in ['bank', 'cpf']:
+            return 0.0
+
         base_record = self.get_base_record_for_ytd(obj)
         
         # Determine base value and base acquisition cost
-        if base_record and base_record.valuation_date < obj.valuation_date:
+        if base_record:
             base_value = float(base_record.current_value)
             base_acq = float(base_record.acquisition_value)
         else:
-            # Fallback for new assets or assets with only one valuation today:
+            # Fallback for new assets with only one valuation today:
             # Compare current state to the initial acquisition cost.
             base_value = float(obj.acquisition_value)
             base_acq = float(obj.acquisition_value)
@@ -74,10 +80,23 @@ class AssetSerializer(serializers.ModelSerializer):
         acq_change = float(obj.acquisition_value) - base_acq
         return value_change - acq_change
 
-    def get_ytd_gain_loss_pct(self, obj):
+    def get_ytd_networth_gain(self, obj):
         base_record = self.get_base_record_for_ytd(obj)
         
-        if base_record and base_record.valuation_date < obj.valuation_date:
+        if base_record:
+            base_value = float(base_record.current_value)
+        else:
+            base_value = float(obj.acquisition_value)
+
+        return float(obj.current_value) - base_value
+
+    def get_ytd_gain_loss_pct(self, obj):
+        if obj.asset_type in ['bank', 'cpf']:
+            return 0.0
+
+        base_record = self.get_base_record_for_ytd(obj)
+        
+        if base_record:
             base_value = float(base_record.current_value)
         else:
             base_value = float(obj.acquisition_value)
