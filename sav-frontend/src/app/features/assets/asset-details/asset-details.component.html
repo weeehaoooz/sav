@@ -1,4 +1,4 @@
-<div class="page-content fade-in">
+<div class="page-content full-width fade-in">
   @if (loading()) {
   <div class="loading-state">
     <div class="spinner"></div>
@@ -21,6 +21,12 @@
     </div>
 
     <div class="header-actions">
+      <button class="action-btn quick-edit-btn" (click)="toggleQuickEdit()" [class.active]="isQuickEdit()"
+        [matTooltip]="isQuickEdit() ? 'Exit direct editing' : 'Enable direct grid editing'">
+        <span class="material-icons">{{ isQuickEdit() ? 'edit_off' : 'bolt' }}</span>
+        <span>{{ isQuickEdit() ? 'Quick Edit' : 'Quick Edit' }}</span>
+      </button>
+
       <button class="action-btn add-btn" (click)="toggleAddForm()" [class.active]="showAddForm()">
         <span class="material-icons">{{ showAddForm() ? 'close' : 'add_circle' }}</span>
         <span>{{ showAddForm() ? 'Cancel' : 'Add Entry' }}</span>
@@ -173,7 +179,8 @@
       <div class="grid-box glass">
         <ag-grid-angular [theme]="gridTheme" [rowData]="history()" [columnDefs]="colDefs()"
           [defaultColDef]="{ sortable: true, resizable: true }" [animateRows]="true" [rowHeight]="52"
-          (gridReady)="onGridReady($event)" style="height: 500px; width: 100%;" />
+          (gridReady)="onGridReady($event)" (cellValueChanged)="onCellValueChanged($event)"
+          style="height: 500px; width: 100%;" />
       </div>
     </div>
   </div>

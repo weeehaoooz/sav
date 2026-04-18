@@ -22,7 +22,8 @@
           <span>{{ isQuickEdit() ? 'Exit Quick Edit' : 'Quick Edit' }}</span>
         </button>
 
-        <button class="action-btn add-btn" (click)="showForm() ? cancelForm() : openCreate()" [class.active]="showForm()">
+        <button class="action-btn add-btn" (click)="showForm() ? cancelForm() : openCreate()"
+          [class.active]="showForm()">
           <span class="material-icons">{{ showForm() ? 'close' : 'add_circle' }}</span>
           <span>{{ showForm() ? 'Cancel' : 'Add Asset' }}</span>
         </button>

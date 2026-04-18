@@ -1,38 +1,36 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 import { AgGridModule } from 'ag-grid-angular';
-import { ColDef, GridReadyEvent, GridApi, CellStyleModule, CellValueChangedEvent } from 'ag-grid-community';
-import { ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule, DateEditorModule, TextEditorModule } from 'ag-grid-community';
+import { CellStyleModule, CellValueChangedEvent, ClientSideRowModelModule, ColDef, DateEditorModule, GridApi, GridReadyEvent, ModuleRegistry, TextEditorModule, TooltipModule, ValidationModule } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule, DateEditorModule, TextEditorModule]);
 
-import { StateService } from '../../shared/services/state.service';
-import { ApiService } from '../../shared/services/api.service';
-import { ThemeService } from '../../shared/services/theme.service';
-import { AssetService } from '../../shared/services/asset.service';
-import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
-import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { savGridTheme } from '../../shared/ag-grid-theme';
-import { Asset, AssetType } from '../../shared/models/asset.model';
-import { AssetHistoryDialogComponent } from './asset-history-dialog/asset-history-dialog.component';
-import { UserService } from '../../shared/services/user.service';
-import { NetworthService } from '../../shared/services/networth.service';
-import { AssetFormComponent } from './components/asset-form/asset-form.component';
 import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
-import { MetricCellRendererComponent } from '../../shared/components/metric-cell-renderer/metric-cell-renderer.component';
 import { CpfCellRendererComponent } from '../../shared/components/cpf-cell-renderer/cpf-cell-renderer.component';
+import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
+import { MetricCellRendererComponent } from '../../shared/components/metric-cell-renderer/metric-cell-renderer.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { Asset, AssetType } from '../../shared/models/asset.model';
+import { ApiService } from '../../shared/services/api.service';
+import { AssetService } from '../../shared/services/asset.service';
+import { NetworthService } from '../../shared/services/networth.service';
+import { StateService } from '../../shared/services/state.service';
+import { ThemeService } from '../../shared/services/theme.service';
+import { UserService } from '../../shared/services/user.service';
+import { AssetFormComponent } from './components/asset-form/asset-form.component';
 
 @Component({
   selector: 'app-assets',
@@ -43,7 +41,6 @@ import { CpfCellRendererComponent } from '../../shared/components/cpf-cell-rende
     MatInputModule, MatSelectModule, MatSnackBarModule,
     MatDatepickerModule, MatNativeDateModule, MatTooltipModule,
     AgGridModule, PageHeaderComponent, MetricCardComponent, AssetFormComponent,
-    ActionsCellRendererComponent, MetricCellRendererComponent, CpfCellRendererComponent
   ],
   templateUrl: './assets.component.html',
   styleUrls: ['./assets.component.scss'],

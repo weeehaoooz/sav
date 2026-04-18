@@ -5,11 +5,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AgGridModule } from 'ag-grid-angular';
 import {
   ColDef, GridReadyEvent, GridApi, ModuleRegistry,
   ClientSideRowModelModule, TooltipModule,
-  DateEditorModule, TextEditorModule, ValidationModule, CellStyleModule
+  DateEditorModule, TextEditorModule, ValidationModule, CellStyleModule, CellValueChangedEvent
 } from 'ag-grid-community';
 import { NgxEchartsModule, NGX_ECHARTS_CONFIG } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
@@ -39,7 +40,7 @@ ModuleRegistry.registerModules([
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    AgGridModule, NgxEchartsModule, MatSnackBarModule, MatButtonModule, MatIconModule,
+    AgGridModule, NgxEchartsModule, MatSnackBarModule, MatButtonModule, MatIconModule, MatTooltipModule
   ],
   providers: [
     {
@@ -81,6 +82,7 @@ export class AssetDetailsComponent implements OnInit {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly chartOptions = signal<EChartsOption>({});
+  readonly isQuickEdit = signal(false);
 
   // ── Add Entry Form ────────────────────────────────────────────────────────
   readonly showAddForm = signal(false);
@@ -110,7 +112,8 @@ export class AssetDetailsComponent implements OnInit {
       }
     ];
 
-    if (asset.asset_type !== 'bank' && asset.asset_type !== 'cpf') {
+    // Show performance metrics for everything except plain bank accounts
+    if (asset.asset_type !== 'bank') {
       items.push(
         {
           label: 'Total Gain/Loss',
@@ -127,6 +130,22 @@ export class AssetDetailsComponent implements OnInit {
           icon: 'pie_chart',
           accentColor: '#818cf8',
           subtitle: 'Return on Investment',
+        },
+        {
+          label: 'YTD Gain/Loss',
+          value: asset.ytd_gain_loss || 0,
+          format: 'currency',
+          icon: (asset.ytd_gain_loss || 0) >= 0 ? 'stat_1' : 'stat_minus_1',
+          accentColor: (asset.ytd_gain_loss || 0) >= 0 ? '#10b981' : '#f43f5e',
+          subtitle: 'Gains within this year',
+        },
+        {
+          label: 'YTD Performance',
+          value: asset.ytd_gain_loss_pct || 0,
+          format: 'percent',
+          icon: 'query_stats',
+          accentColor: (asset.ytd_gain_loss_pct || 0) >= 0 ? '#34d399' : '#fb7185',
+          subtitle: 'Year-to-date return',
         }
       );
     }
@@ -147,7 +166,8 @@ export class AssetDetailsComponent implements OnInit {
         flex: 1,
         minWidth: 110,
         sort: 'desc',
-        editable: true,
+        editable: () => this.isQuickEdit(),
+        cellClass: () => this.isQuickEdit() ? 'editable-cell' : '',
         cellEditor: 'agDateStringCellEditor',
         valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
       },
@@ -156,7 +176,8 @@ export class AssetDetailsComponent implements OnInit {
         headerName: 'Value',
         flex: 1.5,
         minWidth: 160,
-        editable: true,
+        editable: (p) => this.isQuickEdit() && type !== 'cpf',
+        cellClass: (p) => (this.isQuickEdit() && type !== 'cpf') ? 'editable-cell' : '',
         cellEditorParams: { useFormatter: true },
         cellRenderer: type === 'cpf' ? CpfCellRendererComponent : MetricCellRendererComponent,
         cellRendererParams: {
@@ -172,7 +193,8 @@ export class AssetDetailsComponent implements OnInit {
         flex: 1.3,
         minWidth: 140,
         hide: hidePerformance,
-        editable: true,
+        editable: () => this.isQuickEdit(),
+        cellClass: () => this.isQuickEdit() ? 'editable-cell' : '',
         cellRenderer: MetricCellRendererComponent,
         cellRendererParams: {
           currency: currency,
@@ -262,6 +284,37 @@ export class AssetDetailsComponent implements OnInit {
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
+  }
+
+  toggleQuickEdit(): void {
+    this.isQuickEdit.update(v => !v);
+    if (this.gridApi) {
+      this.gridApi.refreshCells({ force: true });
+    }
+  }
+
+  onCellValueChanged(params: CellValueChangedEvent): void {
+    const { data, colDef, newValue } = params;
+    if (!colDef.field) return;
+
+    this.saving.set(true);
+    const payload: Partial<AssetValuationHistory> = {
+      [colDef.field]: colDef.field.includes('date') ? newValue : Number(newValue)
+    };
+
+    this.api.updateAssetHistory(data.id, payload).subscribe({
+      next: () => {
+        this.snackbar.open('Changes saved automatically', 'Close', { duration: 2000 });
+        const currentAsset = this.asset();
+        if (currentAsset) this.refreshAll(currentAsset.id);
+        this.saving.set(false);
+      },
+      error: () => {
+        this.snackbar.open('Failed to auto-save', 'Close', { duration: 3000 });
+        this.saving.set(false);
+        this.loadHistory(data.asset); // Revert
+      }
+    });
   }
 
   loadAsset(id: number): void {

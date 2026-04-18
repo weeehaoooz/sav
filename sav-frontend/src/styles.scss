@@ -328,6 +328,10 @@ body {
   padding: $space-xl;
   max-width: $content-max-width;
   margin: 0 auto;
+
+  &.full-width {
+    max-width: none;
+  }
 }
 
 .section-gap {
