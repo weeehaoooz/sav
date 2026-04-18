@@ -13,6 +13,9 @@ import { ApiService } from '../../../shared/services/api.service';
 import { ThemeService } from '../../../shared/services/theme.service';
 import { Asset, AssetValuationHistory } from '../../../shared/models/asset.model';
 import { savGridTheme } from '../../../shared/ag-grid-theme';
+import { ActionsCellRendererComponent } from '../../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
+import { MetricCellRendererComponent } from '../../../shared/components/metric-cell-renderer/metric-cell-renderer.component';
+import { CpfCellRendererComponent } from '../../../shared/components/cpf-cell-renderer/cpf-cell-renderer.component';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule]);
 
@@ -20,7 +23,8 @@ ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule]);
   selector: 'app-asset-history-dialog',
   standalone: true,
   imports: [
-    CommonModule, MatDialogModule, MatSnackBarModule, AgGridModule, NgxEchartsModule
+    CommonModule, MatDialogModule, MatSnackBarModule, AgGridModule, NgxEchartsModule,
+    ActionsCellRendererComponent, MetricCellRendererComponent, CpfCellRendererComponent
   ],
   providers: [
     {
@@ -55,50 +59,44 @@ export class AssetHistoryDialogComponent implements OnInit {
     {
       field: 'current_value',
       headerName: 'Value',
-      flex: 1.3,
-      cellRenderer: (p: any) => {
-        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.data.asset.currency;
-        if (this.data.asset.asset_type === 'cpf') {
-          return `
-            <div class="cpf-cell-breakdown">
-              <span class="main-val">${currency} ${val}</span>
-              <span class="sub-vals">OA: ${Number(p.data.cpf_oa || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | SA: ${Number(p.data.cpf_sa || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | MA: ${Number(p.data.cpf_ma || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-          `;
-        }
-        return `<span style="font-weight: 500; color: var(--text-primary)">${currency} ${val}</span>`;
+      flex: 1.5,
+      minWidth: 150,
+      cellRenderer: this.data.asset.asset_type === 'cpf' ? CpfCellRendererComponent : MetricCellRendererComponent,
+      cellRendererParams: {
+        currency: this.data.asset.currency || 'SGD',
+        weight: 600,
+        fontSize: '15px',
+        color: 'var(--text-primary)'
       }
     },
     {
       field: 'acquisition_value',
       headerName: 'Acquisition',
       flex: 1.3,
+      minWidth: 130,
       hide: this.data.asset.asset_type === 'bank' || this.data.asset.asset_type === 'cpf',
-      cellRenderer: (p: any) => {
-        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.data.asset.currency;
-        return `<span style="font-weight: 400; color: var(--text-secondary)">${currency} ${val}</span>`;
+      cellRenderer: MetricCellRendererComponent,
+      cellRendererParams: {
+        currency: this.data.asset.currency || 'SGD',
+        weight: 400,
+        fontSize: '13px',
+        color: 'var(--text-secondary)'
       }
     },
     {
       headerName: 'Net G/L',
       flex: 1.2,
+      minWidth: 110,
       hide: this.data.asset.asset_type === 'bank' || this.data.asset.asset_type === 'cpf',
       valueGetter: (p) => (p.data?.current_value || 0) - (p.data?.acquisition_value || 0),
-      cellRenderer: (p: any) => {
-        const val = p.value;
-        const formatted = Number(Math.abs(val)).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.data.asset.currency;
-        const color = val >= 0 ? '#34d399' : '#fb7185';
-        const icon = val >= 0 ? 'trending_up' : 'trending_down';
-        const prefix = val >= 0 ? '+' : '-';
-        return `
-          <div style="display: flex; align-items: center; gap: 4px; color: ${color}; font-weight: 600">
-            <span class="material-icons" style="font-size: 14px">${icon}</span>
-            <span>${prefix}${currency} ${formatted}</span>
-          </div>
-        `;
+      cellRenderer: MetricCellRendererComponent,
+      cellRendererParams: {
+        currency: this.data.asset.currency || 'SGD',
+        useColor: true,
+        useIcon: true,
+        usePrefix: true,
+        fontSize: '13px',
+        weight: 600
       }
     },
     {
@@ -106,16 +104,16 @@ export class AssetHistoryDialogComponent implements OnInit {
       width: 100,
       suppressHeaderMenuButton: true,
       sortable: false,
-      cellRenderer: (p: any) => `
-        <div style="display:flex;align-items:center;justify-content:center;height:100%">
-          <button id="del-hist-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px">
-            <span class="material-icons" style="font-size:14px">delete</span>
-          </button>
-        </div>`,
-      onCellClicked: (p) => {
-        const target = p.event?.target as HTMLElement;
-        const btn = target.closest('button');
-        if (btn?.id?.startsWith('del-hist-') && p.data) this.deleteEntry(p.data.id);
+      cellRenderer: ActionsCellRendererComponent,
+      cellRendererParams: {
+        actions: [
+          {
+            icon: 'delete',
+            tooltip: 'Delete this historical record',
+            class: 'btn-delete',
+            action: (p: any) => this.deleteEntry(p.data.id)
+          }
+        ]
       }
     }
   ];

@@ -75,6 +75,17 @@ class AssetValuationHistoryViewSet(viewsets.ModelViewSet):
     queryset = AssetValuationHistory.objects.all()
     serializer_class = AssetValuationHistorySerializer
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        instance.asset.refresh_from_history()
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        # Re-sync the parent asset after any update to a history entry
+        history_item = self.get_object()
+        history_item.asset.refresh_from_history()
+        return response
+
     def destroy(self, request, *args, **kwargs):
         history_item = self.get_object()
         asset = history_item.asset
@@ -82,6 +93,7 @@ class AssetValuationHistoryViewSet(viewsets.ModelViewSet):
         # After deletion, refresh the asset from the remaining history
         asset.refresh_from_history()
         return response
+
 
 
 # ── Liabilities ───────────────────────────────────────────────────────────────

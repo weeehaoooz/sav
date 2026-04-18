@@ -14,9 +14,9 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AgGridModule } from 'ag-grid-angular';
 import { ColDef, GridReadyEvent, GridApi, CellStyleModule, CellValueChangedEvent } from 'ag-grid-community';
-import { ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule } from 'ag-grid-community';
+import { ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule, DateEditorModule, TextEditorModule } from 'ag-grid-community';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule]);
+ModuleRegistry.registerModules([ClientSideRowModelModule, CellStyleModule, TooltipModule, ValidationModule, DateEditorModule, TextEditorModule]);
 
 import { StateService } from '../../shared/services/state.service';
 import { ApiService } from '../../shared/services/api.service';
@@ -30,6 +30,9 @@ import { AssetHistoryDialogComponent } from './asset-history-dialog/asset-histor
 import { UserService } from '../../shared/services/user.service';
 import { NetworthService } from '../../shared/services/networth.service';
 import { AssetFormComponent } from './components/asset-form/asset-form.component';
+import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
+import { MetricCellRendererComponent } from '../../shared/components/metric-cell-renderer/metric-cell-renderer.component';
+import { CpfCellRendererComponent } from '../../shared/components/cpf-cell-renderer/cpf-cell-renderer.component';
 
 @Component({
   selector: 'app-assets',
@@ -39,7 +42,8 @@ import { AssetFormComponent } from './components/asset-form/asset-form.component
     MatIconModule, MatButtonModule, MatDialogModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatSnackBarModule,
     MatDatepickerModule, MatNativeDateModule, MatTooltipModule,
-    AgGridModule, PageHeaderComponent, MetricCardComponent, AssetFormComponent
+    AgGridModule, PageHeaderComponent, MetricCardComponent, AssetFormComponent,
+    ActionsCellRendererComponent, MetricCellRendererComponent, CpfCellRendererComponent
   ],
   templateUrl: './assets.component.html',
   styleUrls: ['./assets.component.scss'],
@@ -126,28 +130,40 @@ export class AssetsComponent implements OnInit {
       }
     },
     {
-      field: 'current_value', headerName: 'Current Value', flex: 1.2, type: 'rightAligned',
+      field: 'current_value', headerName: 'Current Value', flex: 1.2, minWidth: 150, type: 'rightAligned',
       editable: (p) => this.isQuickEdit() && (p.data?.asset_type !== 'cpf' || p.data?.isVirtualChild),
       cellClass: (p) => this.isQuickEdit() && (p.data?.asset_type !== 'cpf' || p.data?.isVirtualChild) ? 'editable-cell' : '',
-      valueFormatter: p => {
-        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return p.data?.isVirtualChild ? `(SGD ${val})` : `SGD ${val}`;
+      cellRendererSelector: (p) => {
+        if (p.data?.asset_type === 'cpf' && !p.data?.isVirtualChild) {
+          return { component: CpfCellRendererComponent };
+        }
+        return { component: MetricCellRendererComponent };
       },
+      cellRendererParams: (p: any) => ({
+        currency: p.data?.isVirtualChild ? '(SGD' : 'SGD',
+        suffix: p.data?.isVirtualChild ? ')' : '',
+        weight: p.data?.isVirtualChild ? 400 : 500,
+        fontSize: p.data?.isVirtualChild ? '12px' : '13px',
+        color: p.data?.isVirtualChild ? 'var(--text-secondary)' : 'var(--text-primary)'
+      })
     },
     {
-      field: 'ytd_gain_loss', headerName: 'Investment +/- (YTD)', flex: 1.2, type: 'rightAligned',
+      field: 'ytd_gain_loss', headerName: 'Investment +/- (YTD)', flex: 1.2, minWidth: 140, type: 'rightAligned',
       tooltipValueGetter: () => 'Year-to-Date Performance: Total value change minus any increases in acquisition costs (contributions) since start of year.',
-      cellStyle: p => ({ color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185' }),
-      valueFormatter: p => {
-        if (p.data?.isVirtualChild) return '';
-        const v = Number(p.value ?? 0);
-        const currency = p.data?.currency || 'SGD';
-        const formatted = Math.abs(v).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return `${v >= 0 ? '+' : ''}${currency} ${formatted}`;
+      cellRendererSelector: (p) => {
+        if (p.data?.isVirtualChild) return undefined;
+        return { component: MetricCellRendererComponent };
       },
+      cellRendererParams: {
+        currency: 'SGD',
+        useColor: true,
+        usePrefix: true,
+        fontSize: '13px',
+        weight: 400
+      }
     },
     {
-      headerName: 'ROI', flex: 0.8, type: 'rightAligned',
+      headerName: 'ROI', flex: 0.8, minWidth: 100, type: 'rightAligned',
       valueGetter: p => {
         if (p.data?.isVirtualChild) return null;
         const current = p.data?.current_value || 0;
@@ -155,14 +171,18 @@ export class AssetsComponent implements OnInit {
         if (acq <= 0) return null;
         return ((current - acq) / acq) * 100;
       },
-      valueFormatter: p => {
-        if (p.value == null) return '—';
-        return `${p.value >= 0 ? '+' : ''}${p.value.toFixed(2)}%`;
+      cellRendererSelector: (p) => {
+        if (p.value == null) return undefined;
+        return { component: MetricCellRendererComponent };
       },
-      cellStyle: p => ({
-        color: (p.value ?? 0) >= 0 ? '#34d399' : '#fb7185',
-        fontWeight: '600'
-      }),
+      cellRendererParams: {
+        useColor: true,
+        usePrefix: true,
+        useIcon: true,
+        suffix: '%',
+        fontSize: '12px',
+        weight: 400
+      },
       tooltipValueGetter: () => 'Return on Investment: (Current Value - Acquisition Cost) / Acquisition Cost',
     },
     {
@@ -178,22 +198,36 @@ export class AssetsComponent implements OnInit {
       hide: true, // Kept hidden but available for tooltips or filtering
     },
     {
-      headerName: 'Actions', flex: 1.2, sortable: false, filter: false,
-      cellRenderer: (p: any) => {
-        if (p.data?.isVirtualChild) return '';
-        return `<div style="display:flex;gap:4px;align-items:center;height:100%">
-          <button id="history-${p.data.id}" style="background:rgba(52,211,153,0.12);border:none;color:#34d399;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">History</button>
-          <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Update</button>
-          <button id="del-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
-        </div>`;
-      },
-      onCellClicked: (p) => {
-        if (p.data?.isVirtualChild) return;
-        const target = p.event?.target as HTMLElement;
-        if (target?.id?.startsWith('history-') && p.data) this.openHistory(p.data);
-        if (target?.id?.startsWith('edit-') && p.data) this.openEdit(p.data);
-        if (target?.id?.startsWith('del-') && p.data) this.deleteAsset(p.data.id);
-      },
+      headerName: 'Actions',
+      flex: 1.2,
+      sortable: false,
+      filter: false,
+      cellRenderer: ActionsCellRendererComponent,
+      cellRendererParams: {
+        actions: [
+          {
+            icon: 'history',
+            tooltip: 'View Asset Details & History',
+            class: 'btn-history',
+            show: (p: any) => !p.data?.isVirtualChild,
+            action: (p: any) => this.openHistory(p.data)
+          },
+          {
+            icon: 'edit',
+            tooltip: 'Edit Asset Information',
+            class: 'btn-edit',
+            show: (p: any) => !p.data?.isVirtualChild,
+            action: (p: any) => this.openEdit(p.data)
+          },
+          {
+            icon: 'delete',
+            tooltip: 'Delete Asset Permanently',
+            class: 'btn-delete',
+            show: (p: any) => !p.data?.isVirtualChild,
+            action: (p: any) => this.deleteAsset(p.data.id)
+          }
+        ]
+      }
     },
   ];
 

@@ -1,0 +1,11 @@
+<div class="actions-container">
+  @for (btn of actions; track $index) {
+  @if (!btn.show || btn.show(params)) {
+  <button type="button" class="action-btn" [class]="btn.class" [style.color]="btn.color"
+    [style.background-color]="btn.backgroundColor" [title]="btn.tooltip || ''"
+    (click)="btn.action(params); $event.stopPropagation()">
+    <span class="material-icons">{{ btn.icon }}</span>
+  </button>
+  }
+  }
+</div>

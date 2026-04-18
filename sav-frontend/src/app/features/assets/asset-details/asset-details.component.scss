@@ -67,6 +67,47 @@
       }
     }
   }
+
+  .header-actions {
+    display: flex;
+    gap: $space-sm;
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba($accent-emerald, 0.3);
+      background: rgba($accent-emerald, 0.1);
+      color: $accent-emerald;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      .material-icons { font-size: 18px; }
+
+      &:hover {
+        background: rgba($accent-emerald, 0.2);
+        border-color: rgba($accent-emerald, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba($accent-emerald, 0.2);
+      }
+
+      &.active {
+        background: rgba($accent-rose, 0.1);
+        border-color: rgba($accent-rose, 0.3);
+        color: $accent-rose;
+
+        &:hover {
+          background: rgba($accent-rose, 0.2);
+          border-color: rgba($accent-rose, 0.5);
+          box-shadow: 0 4px 16px rgba($accent-rose, 0.2);
+        }
+      }
+    }
+  }
 }
 
 .performance-summary {
@@ -100,8 +141,8 @@
     }
 
     .m-value {
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 600;
       color: $text-primary;
     }
 
@@ -123,9 +164,227 @@
   }
 }
 
+// ── Add / Edit Entry Form ─────────────────────────────────────────────────────
+
+.add-entry-form {
+  margin-bottom: $space-xl;
+  border-radius: $radius-lg;
+  padding: $space-xl;
+  border: 1px solid rgba($accent-emerald, 0.2);
+  animation: slideDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .form-header {
+    @include flex-between;
+    margin-bottom: $space-xl;
+
+    .form-title-group {
+      display: flex;
+      align-items: center;
+      gap: $space-md;
+
+      .form-icon {
+        font-size: 28px;
+        color: $accent-emerald;
+        opacity: 0.9;
+      }
+
+      .form-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: $text-primary;
+      }
+
+      .form-subtitle {
+        font-size: 12px;
+        color: $text-secondary;
+        margin-top: 2px;
+      }
+    }
+
+    .close-form-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba($text-secondary, 0.08);
+      border: 1px solid rgba($text-secondary, 0.15);
+      color: $text-secondary;
+      @include flex-center;
+      cursor: pointer;
+      transition: all 0.18s ease;
+
+      &:hover {
+        background: rgba($accent-rose, 0.12);
+        border-color: rgba($accent-rose, 0.25);
+        color: $accent-rose;
+      }
+
+      .material-icons { font-size: 18px; }
+    }
+  }
+
+  .entry-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: $space-lg;
+    align-items: start;
+
+    // Actions span full width
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      gap: $space-sm;
+      padding-top: $space-sm;
+      border-top: 1px solid $border-subtle;
+      margin-top: $space-xs;
+    }
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &.error {
+      .field-input { border-color: var(--accent-rose) !important; }
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--input-label-color);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+
+      .required { color: $accent-rose; margin-left: 2px; }
+    }
+
+    .field-input {
+      height: 46px;
+      padding: 0 $space-md;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--input-radius);
+      color: var(--input-text-color);
+      font-size: 14px;
+      font-family: $font-family;
+      transition: var(--input-transition);
+      width: 100%;
+      box-sizing: border-box;
+
+      &:hover { border-color: var(--input-border-hover); }
+      &:focus {
+        outline: none;
+        border-color: var(--input-border-focus);
+        background: var(--input-bg-focus);
+        box-shadow: var(--input-focus-shadow);
+      }
+
+      &.prefixed { padding-left: 56px; }
+    }
+
+    input[type="date"].field-input {
+      color-scheme: dark;
+    }
+
+    .field-with-prefix {
+      position: relative;
+
+      .field-prefix {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--input-prefix-color);
+        pointer-events: none;
+        z-index: 1;
+      }
+    }
+
+    .field-error {
+      font-size: 11px;
+      color: $accent-rose;
+      margin-top: 2px;
+    }
+  }
+
+  .btn-primary, .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, $accent-emerald, color-mix(in srgb, $accent-emerald, $accent-indigo 40%));
+    color: white;
+    box-shadow: 0 4px 12px rgba($accent-emerald, 0.25);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba($accent-emerald, 0.35);
+    }
+  }
+
+  .btn-secondary {
+    background: rgba($text-secondary, 0.08);
+    border: 1px solid rgba($text-secondary, 0.15);
+    color: $text-secondary;
+
+    &:hover:not(:disabled) {
+      background: rgba($text-secondary, 0.14);
+      color: $text-primary;
+    }
+  }
+
+  .btn-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+// ── History panel section header ──────────────────────────────────────────────
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-md;
+  padding-left: $space-xs;
+
+  .card-title {
+    margin: 0;
+  }
+
+  .entry-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: $text-secondary;
+    background: rgba($text-secondary, 0.08);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+}
+
+// ── Main layout ───────────────────────────────────────────────────────────────
+
 .main-layout {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: 1.2fr 1fr;
   gap: $space-xl;
   align-items: start;
 
@@ -146,7 +405,7 @@
   .chart-box {
     height: 440px;
     padding: $space-lg;
-    
+
     echarts { height: 100%; width: 100%; }
   }
 
@@ -155,6 +414,8 @@
     overflow: hidden;
   }
 }
+
+// ── Loading state ──────────────────────────────────────────────────────────────
 
 .loading-state {
   @include flex-center;
@@ -174,6 +435,11 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 :host ::ng-deep {
   .ag-theme-custom {

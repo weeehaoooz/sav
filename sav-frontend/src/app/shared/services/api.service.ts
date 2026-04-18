@@ -55,6 +55,12 @@ export class ApiService {
   getAssetHistory(assetId: number): Observable<AssetValuationHistory[]> {
     return this.http.get<AssetValuationHistory[]>(`${this.base}/assets/${assetId}/history/`);
   }
+  createAssetHistory(data: Partial<AssetValuationHistory>): Observable<AssetValuationHistory> {
+    return this.http.post<AssetValuationHistory>(`${this.base}/asset-history/`, data);
+  }
+  updateAssetHistory(historyId: number, data: Partial<AssetValuationHistory>): Observable<AssetValuationHistory> {
+    return this.http.patch<AssetValuationHistory>(`${this.base}/asset-history/${historyId}/`, data);
+  }
   deleteAssetHistory(historyId: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/asset-history/${historyId}/`);
   }

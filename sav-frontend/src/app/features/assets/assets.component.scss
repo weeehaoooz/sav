@@ -21,37 +21,102 @@
     justify-content: space-between;
     align-items: center;
     padding: 2px 0;
+    margin-bottom: $space-sm;
 
     .toolbar-info {
       display: flex;
       align-items: center;
       gap: $space-xs;
-      padding: 6px 16px;
+      padding: 8px 20px;
       border-radius: 20px;
-      background: color-mix(in srgb, $accent-indigo 10%, transparent);
-      border: 1px solid color-mix(in srgb, $accent-indigo 20%, transparent);
-      transition: $transition-fast;
+      background: color-mix(in srgb, $accent-indigo 8%, transparent);
+      border: 1px solid color-mix(in srgb, $accent-indigo 15%, transparent);
+      transition: all 0.2s ease;
 
       &:hover {
-        background: color-mix(in srgb, $accent-indigo 15%, transparent);
+        background: color-mix(in srgb, $accent-indigo 12%, transparent);
         border-color: color-mix(in srgb, $accent-indigo 30%, transparent);
-      }
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        color: #f59e0b; // Match the original accent color
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($accent-indigo, 0.1);
       }
 
       .count {
-        font-weight: $font-weight-bold;
-        font-size: $font-size-base;
+        font-weight: 800;
+        font-size: 16px;
+        color: $accent-indigo;
       }
 
       .label {
-        font-size: $font-size-sm;
+        font-size: 13px;
         color: $text-secondary;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: $space-sm;
+
+      .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: transparent;
+
+        .material-icons {
+          font-size: 18px;
+        }
+
+        &:hover {
+          transform: translateY(-2px);
+        }
+
+        &.add-btn {
+          border-color: rgba($accent-emerald, 0.3);
+          background: rgba($accent-emerald, 0.1);
+          color: $accent-emerald;
+
+          &:hover {
+            background: rgba($accent-emerald, 0.2);
+            border-color: rgba($accent-emerald, 0.5);
+            box-shadow: 0 4px 16px rgba($accent-emerald, 0.2);
+          }
+        }
+
+        &.quick-edit-btn {
+          border-color: rgba($accent-indigo, 0.3);
+          background: rgba($accent-indigo, 0.1);
+          color: $accent-indigo;
+
+          &:hover {
+            background: rgba($accent-indigo, 0.2);
+            border-color: rgba($accent-indigo, 0.5);
+            box-shadow: 0 4px 16px rgba($accent-indigo, 0.2);
+          }
+        }
+
+        &.active {
+          background: rgba($accent-rose, 0.1);
+          border-color: rgba($accent-rose, 0.3);
+          color: $accent-rose;
+
+          &:hover {
+            background: rgba($accent-rose, 0.2);
+            border-color: rgba($accent-rose, 0.5);
+            box-shadow: 0 4px 16px rgba($accent-rose, 0.2);
+          }
+        }
       }
     }
   }

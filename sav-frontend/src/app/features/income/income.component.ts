@@ -19,6 +19,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { savGridTheme } from '../../shared/ag-grid-theme';
 import { Income, IncomeType, Frequency } from '../../shared/models/income.model';
+import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
 
 @Component({
   selector: 'app-income',
@@ -27,7 +28,7 @@ import { Income, IncomeType, Frequency } from '../../shared/models/income.model'
     CommonModule, FormsModule, ReactiveFormsModule,
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatSnackBarModule, AgGridModule,
-    PageHeaderComponent, MetricCardComponent,
+    PageHeaderComponent, MetricCardComponent, ActionsCellRendererComponent
   ],
   templateUrl: './income.component.html',
   styleUrls: ['./income.component.scss'],
@@ -81,17 +82,26 @@ export class IncomeComponent {
     { field: 'frequency', headerName: 'Frequency', flex: 1 },
     { field: 'monthly_equivalent', headerName: 'Monthly', flex: 1, type: 'rightAligned', cellStyle: { color: '#34d399' }, valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
     {
-      headerName: 'Actions', flex: 0.8, sortable: false,
-      cellRenderer: (p: any) => `
-        <div style="display:flex;gap:4px;align-items:center;height:100%">
-          <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Edit</button>
-          <button id="del-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
-        </div>`,
-      onCellClicked: (p) => {
-        const id = (p.event?.target as HTMLElement)?.id;
-        if (id?.startsWith('edit-') && p.data) this.openEdit(p.data);
-        if (id?.startsWith('del-') && p.data) this.deleteItem(p.data.id);
-      },
+      headerName: 'Actions',
+      flex: 0.8,
+      sortable: false,
+      cellRenderer: ActionsCellRendererComponent,
+      cellRendererParams: {
+        actions: [
+          {
+            icon: 'edit',
+            tooltip: 'Edit Income Source',
+            class: 'btn-edit',
+            action: (p: any) => this.openEdit(p.data)
+          },
+          {
+            icon: 'delete',
+            tooltip: 'Delete Income Source',
+            class: 'btn-delete',
+            action: (p: any) => this.deleteItem(p.data.id)
+          }
+        ]
+      }
     },
   ];
 

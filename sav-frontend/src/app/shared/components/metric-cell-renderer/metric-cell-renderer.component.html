@@ -1,0 +1,6 @@
+<div class="metric-container" [style.color]="displayColor" [style.font-weight]="weight" [style.font-size]="fontSize">
+  @if (icon) {
+  <span class="material-icons metric-icon" [style.font-size]="iconSize">{{ icon }}</span>
+  }
+  <span class="metric-cell-val">{{ prefix }}{{ currencySymbol }}{{ formattedValue }}{{ suffix }}</span>
+</div>

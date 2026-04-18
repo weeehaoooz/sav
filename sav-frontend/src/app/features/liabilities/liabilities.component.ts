@@ -20,6 +20,7 @@ import { MetricCardComponent, MetricCardConfig } from '../../shared/components/m
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
 import { savGridTheme } from '../../shared/ag-grid-theme';
 import { Liability, LiabilityType } from '../../shared/models/liability.model';
+import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
 import type { EChartsOption } from 'echarts';
 
 @Component({
@@ -29,7 +30,7 @@ import type { EChartsOption } from 'echarts';
     CommonModule, FormsModule, ReactiveFormsModule,
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatSnackBarModule,
-    AgGridModule, PageHeaderComponent, MetricCardComponent, ChartCardComponent,
+    AgGridModule, PageHeaderComponent, MetricCardComponent, ChartCardComponent
   ],
   templateUrl: './liabilities.component.html',
   styleUrls: ['./liabilities.component.scss'],
@@ -77,19 +78,33 @@ export class LiabilitiesComponent {
     { field: 'interest_rate', headerName: 'Rate', flex: 0.8, valueFormatter: p => `${((p.value ?? 0) * 100).toFixed(2)}%` },
     { field: 'tenure_months', headerName: 'Tenure', flex: 0.8, valueFormatter: p => `${p.value} mo` },
     {
-      headerName: 'Actions', flex: 1, sortable: false,
-      cellRenderer: (p: any) => `
-        <div style="display:flex;gap:4px;align-items:center;height:100%">
-          <button id="amort-${p.data.id}" style="background:rgba(6,182,212,0.1);border:none;color:#22d3ee;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Schedule</button>
-          <button id="edit-${p.data.id}" style="background:rgba(99,102,241,0.12);border:none;color:#818cf8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Edit</button>
-          <button id="del-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
-        </div>`,
-      onCellClicked: (p) => {
-        const id = (p.event?.target as HTMLElement)?.id;
-        if (id?.startsWith('edit-') && p.data) this.openEdit(p.data);
-        if (id?.startsWith('del-') && p.data) this.deleteLiability(p.data.id);
-        if (id?.startsWith('amort-') && p.data) this.loadAmortisation(p.data.id);
-      },
+      headerName: 'Actions',
+      flex: 1,
+      sortable: false,
+      cellRenderer: ActionsCellRendererComponent,
+      cellRendererParams: {
+        actions: [
+          {
+            icon: 'calendar_month',
+            tooltip: 'View Amortisation Schedule',
+            backgroundColor: 'rgba(6,182,212,0.1)',
+            color: '#22d3ee',
+            action: (p: any) => this.loadAmortisation(p.data.id)
+          },
+          {
+            icon: 'edit',
+            tooltip: 'Edit Liability',
+            class: 'btn-edit',
+            action: (p: any) => this.openEdit(p.data)
+          },
+          {
+            icon: 'delete',
+            tooltip: 'Delete Liability',
+            class: 'btn-delete',
+            action: (p: any) => this.deleteLiability(p.data.id)
+          }
+        ]
+      }
     },
   ];
 
@@ -104,10 +119,10 @@ export class LiabilitiesComponent {
     const data = this.amortisationData();
     return {
       backgroundColor: 'transparent',
-      tooltip: { 
-        trigger: 'axis', 
-        backgroundColor: '#1e2740', 
-        borderColor: 'rgba(255,255,255,0.08)', 
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: '#1e2740',
+        borderColor: 'rgba(255,255,255,0.08)',
         textStyle: { color: '#f0f4ff', fontFamily: 'Inter' },
         formatter: (params: any) => {
           let res = `Period ${params[0].axisValue}<br/>`;

@@ -1,33 +1,65 @@
 import { Component, inject, signal, OnInit, effect, untracked, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AgGridModule } from 'ag-grid-angular';
-import { ColDef, GridReadyEvent, GridApi, ModuleRegistry, ClientSideRowModelModule, TooltipModule } from 'ag-grid-community';
+import {
+  ColDef, GridReadyEvent, GridApi, ModuleRegistry,
+  ClientSideRowModelModule, TooltipModule,
+  DateEditorModule, TextEditorModule, ValidationModule, CellStyleModule
+} from 'ag-grid-community';
 import { NgxEchartsModule, NGX_ECHARTS_CONFIG } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
+
+import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ApiService } from '../../../shared/services/api.service';
 import { ThemeService } from '../../../shared/services/theme.service';
 import { Asset, AssetValuationHistory } from '../../../shared/models/asset.model';
 import { savGridTheme } from '../../../shared/ag-grid-theme';
-import { MetricCardComponent, MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
+import { MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
+import { ActionsCellRendererComponent, ActionCellRendererParams } from '../../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
+import { MetricCellRendererComponent } from '../../../shared/components/metric-cell-renderer/metric-cell-renderer.component';
+import { CpfCellRendererComponent } from '../../../shared/components/cpf-cell-renderer/cpf-cell-renderer.component';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule]);
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  TooltipModule,
+  DateEditorModule,
+  TextEditorModule,
+  ValidationModule,
+  CellStyleModule
+]);
 
 @Component({
   selector: 'app-asset-details',
   standalone: true,
   imports: [
-    CommonModule, AgGridModule, NgxEchartsModule, MatSnackBarModule
+    CommonModule, FormsModule, ReactiveFormsModule,
+    AgGridModule, NgxEchartsModule, MatSnackBarModule, MatButtonModule, MatIconModule,
   ],
   providers: [
     {
       provide: NGX_ECHARTS_CONFIG,
       useValue: { echarts: () => import('echarts') }
     }
+  ],
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden', transform: 'translateY(-10px)' }),
+        animate('250ms cubic-bezier(0.4, 0, 0.2, 1)',
+          style({ height: '*', opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        style({ height: '*', opacity: 1, overflow: 'hidden' }),
+        animate('200ms cubic-bezier(0.4, 0, 0.2, 1)',
+          style({ height: 0, opacity: 0, transform: 'translateY(-10px)' }))
+      ])
+    ])
   ],
   templateUrl: './asset-details.component.html',
   styleUrls: ['./asset-details.component.scss']
@@ -37,6 +69,7 @@ export class AssetDetailsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly api = inject(ApiService);
+  private readonly fb = inject(FormBuilder);
   private readonly snackbar = inject(MatSnackBar);
   protected readonly themeService = inject(ThemeService);
 
@@ -46,7 +79,15 @@ export class AssetDetailsComponent implements OnInit {
   readonly asset = signal<Asset | null>(null);
   readonly history = signal<AssetValuationHistory[]>([]);
   readonly loading = signal(true);
+  readonly saving = signal(false);
   readonly chartOptions = signal<EChartsOption>({});
+
+  // ── Add Entry Form ────────────────────────────────────────────────────────
+  readonly showAddForm = signal(false);
+  entryForm!: FormGroup;
+
+  readonly isCpf = computed(() => this.asset()?.asset_type === 'cpf');
+  readonly isEquity = computed(() => this.asset()?.asset_type === 'equity');
 
   readonly metrics = computed<MetricCardConfig[]>(() => {
     const asset = this.asset();
@@ -93,81 +134,97 @@ export class AssetDetailsComponent implements OnInit {
     return items;
   });
 
-  readonly colDefs: ColDef<AssetValuationHistory>[] = [
-    {
-      field: 'valuation_date',
-      headerName: 'Date',
-      flex: 1,
-      sort: 'desc',
-      valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
-    },
-    {
-      field: 'current_value',
-      headerName: 'Value',
-      flex: 1.3,
-      cellRenderer: (p: any) => {
-        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.asset()?.currency || 'SGD';
-        if (this.asset()?.asset_type === 'cpf') {
-          return `
-            <div class="cpf-cell-breakdown">
-              <span class="main-val">${currency} ${val}</span>
-              <span class="sub-vals">OA: ${Number(p.data.cpf_oa || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | SA: ${Number(p.data.cpf_sa || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | MA: ${Number(p.data.cpf_ma || 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-          `;
+  readonly colDefs = computed<ColDef<AssetValuationHistory>[]>(() => {
+    const currentAsset = this.asset();
+    const currency = currentAsset?.currency || 'SGD';
+    const type = currentAsset?.asset_type;
+    const hidePerformance = type === 'bank' || type === 'cpf';
+
+    return [
+      {
+        field: 'valuation_date',
+        headerName: 'Date',
+        flex: 1,
+        minWidth: 110,
+        sort: 'desc',
+        editable: true,
+        cellEditor: 'agDateStringCellEditor',
+        valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+      },
+      {
+        field: 'current_value',
+        headerName: 'Value',
+        flex: 1.5,
+        minWidth: 160,
+        editable: true,
+        cellEditorParams: { useFormatter: true },
+        cellRenderer: type === 'cpf' ? CpfCellRendererComponent : MetricCellRendererComponent,
+        cellRendererParams: {
+          currency: currency,
+          weight: 500,
+          fontSize: '13px',
+          color: 'var(--text-primary)'
         }
-        return `<span style="font-weight: 500; color: var(--text-primary)">${currency} ${val}</span>`;
+      },
+      {
+        field: 'acquisition_value',
+        headerName: 'Acquisition',
+        flex: 1.3,
+        minWidth: 140,
+        hide: hidePerformance,
+        editable: true,
+        cellRenderer: MetricCellRendererComponent,
+        cellRendererParams: {
+          currency: currency,
+          weight: 400,
+          fontSize: '12px',
+          color: 'var(--text-secondary)'
+        }
+      },
+      {
+        headerName: 'Net G/L',
+        flex: 1.2,
+        minWidth: 120,
+        hide: hidePerformance,
+        valueGetter: (p) => (p.data?.current_value || 0) - (p.data?.acquisition_value || 0),
+        cellRenderer: MetricCellRendererComponent,
+        cellRendererParams: {
+          currency: currency,
+          useColor: true,
+          useIcon: true,
+          usePrefix: true,
+          fontSize: '13px',
+          weight: 400
+        }
+      },
+      {
+        headerName: 'Actions',
+        width: 100,
+        suppressHeaderMenuButton: true,
+        sortable: false,
+        cellRenderer: ActionsCellRendererComponent,
+        cellRendererParams: {
+          actions: [
+            {
+              icon: 'edit',
+              tooltip: 'Edit this historical entry',
+              class: 'btn-edit',
+              action: (p: ActionCellRendererParams) => this.openEditEntry(p.data)
+            },
+            {
+              icon: 'delete',
+              tooltip: 'Delete this historical entry',
+              class: 'btn-delete',
+              action: (p: ActionCellRendererParams) => this.deleteEntry(p.data.id)
+            }
+          ]
+        } as ActionCellRendererParams
       }
-    },
-    {
-      field: 'acquisition_value',
-      headerName: 'Acquisition',
-      flex: 1.3,
-      hide: false, // Update below during fetch
-      cellRenderer: (p: any) => {
-        const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.asset()?.currency || 'SGD';
-        return `<span style="font-weight: 400; color: var(--text-secondary)">${currency} ${val}</span>`;
-      }
-    },
-    {
-      headerName: 'Net G/L',
-      flex: 1.2,
-      hide: false, // Update below during fetch
-      valueGetter: (p) => (p.data?.current_value || 0) - (p.data?.acquisition_value || 0),
-      cellRenderer: (p: any) => {
-        const val = p.value;
-        const formatted = Number(Math.abs(val)).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.asset()?.currency || 'SGD';
-        const color = val >= 0 ? '#34d399' : '#fb7185';
-        const icon = val >= 0 ? 'trending_up' : 'trending_down';
-        const prefix = val >= 0 ? '+' : '-';
-        return `
-          <div style="display: flex; align-items: center; gap: 4px; color: ${color}; font-weight: 600">
-            <span class="material-icons" style="font-size: 14px">${icon}</span>
-            <span>${prefix}${currency} ${formatted}</span>
-          </div>
-        `;
-      }
-    },
-    {
-      headerName: 'Actions',
-      width: 100,
-      suppressHeaderMenuButton: true,
-      sortable: false,
-      cellRenderer: (p: any) => `
-        <div style="display:flex;align-items:center;justify-content:center;height:100%">
-          <button id="del-hist-${p.data.id}" style="background:rgba(244,63,94,0.1);border:none;color:#fb7185;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px">
-            <span class="material-icons" style="font-size:14px">delete</span>
-          </button>
-        </div>`,
-      onCellClicked: (p) => {
-        const target = p.event?.target as HTMLElement;
-        const btn = target.closest('button');
-        if (btn?.id?.startsWith('del-hist-') && p.data) this.deleteEntry(p.data.id);
-      }
-    }
-  ];
+    ];
+  });
+
+  // ── Editing an existing entry ─────────────────────────────────────────────
+  readonly editingEntry = signal<AssetValuationHistory | null>(null);
 
   constructor() {
     effect(() => {
@@ -187,6 +244,20 @@ export class AssetDetailsComponent implements OnInit {
     } else {
       this.goBack();
     }
+    this.buildForm();
+  }
+
+  private buildForm(prefill?: Partial<AssetValuationHistory>): void {
+    const today = new Date().toISOString().split('T')[0];
+    this.entryForm = this.fb.group({
+      valuation_date: [prefill?.valuation_date ?? today, Validators.required],
+      current_value: [prefill?.current_value ?? null, [Validators.required, Validators.min(0)]],
+      acquisition_value: [prefill?.acquisition_value ?? 0, Validators.min(0)],
+      cpf_oa: [prefill?.cpf_oa ?? 0, Validators.min(0)],
+      cpf_sa: [prefill?.cpf_sa ?? 0, Validators.min(0)],
+      cpf_ma: [prefill?.cpf_ma ?? 0, Validators.min(0)],
+      cpf_ra: [prefill?.cpf_ra ?? 0, Validators.min(0)],
+    });
   }
 
   onGridReady(params: GridReadyEvent): void {
@@ -198,16 +269,6 @@ export class AssetDetailsComponent implements OnInit {
     this.api.getAsset(id).subscribe({
       next: (asset) => {
         this.asset.set(asset);
-        // Hide acquisition and Net G/L columns for bank and cpf
-        const type = asset.asset_type;
-        const hideCols = type === 'bank' || type === 'cpf';
-        this.colDefs[2].hide = hideCols;
-        this.colDefs[3].hide = hideCols;
-
-        if (this.gridApi) {
-          this.gridApi.setGridOption('columnDefs', this.colDefs);
-        }
-
         this.loadHistory(id);
       },
       error: () => {
@@ -230,13 +291,131 @@ export class AssetDetailsComponent implements OnInit {
     });
   }
 
+  // ── Add Entry Form ────────────────────────────────────────────────────────
+
+  toggleAddForm(): void {
+    if (this.editingEntry()) {
+      // Cancel edit, switch to empty add mode
+      this.editingEntry.set(null);
+      this.buildForm();
+      this.showAddForm.set(true);
+    } else {
+      this.showAddForm.update(v => !v);
+      if (!this.showAddForm()) {
+        this.buildForm(); // reset on close
+      }
+    }
+  }
+
+  openEditEntry(entry: AssetValuationHistory): void {
+    this.editingEntry.set(entry);
+    this.buildForm(entry);
+    this.showAddForm.set(true);
+    // Scroll to form after tick
+    setTimeout(() => {
+      document.querySelector('.add-entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
+  cancelForm(): void {
+    this.showAddForm.set(false);
+    this.editingEntry.set(null);
+    this.buildForm();
+  }
+
+  saveEntry(): void {
+    if (this.entryForm.invalid) {
+      this.entryForm.markAllAsTouched();
+      return;
+    }
+
+    const asset = this.asset();
+    if (!asset) return;
+
+    this.saving.set(true);
+    const raw = this.entryForm.value;
+
+    // If CPF, compute current_value from sub-accounts
+    const payload: Partial<AssetValuationHistory> = {
+      valuation_date: raw.valuation_date,
+      acquisition_value: Number(raw.acquisition_value) || 0,
+    };
+
+    if (this.isCpf()) {
+      const oa = Number(raw.cpf_oa) || 0;
+      const sa = Number(raw.cpf_sa) || 0;
+      const ma = Number(raw.cpf_ma) || 0;
+      const ra = Number(raw.cpf_ra) || 0;
+      payload.cpf_oa = oa;
+      payload.cpf_sa = sa;
+      payload.cpf_ma = ma;
+      payload.cpf_ra = ra;
+      payload.current_value = oa + sa + ma + ra;
+    } else {
+      payload.current_value = Number(raw.current_value) || 0;
+    }
+
+    const editEntry = this.editingEntry();
+
+    if (editEntry) {
+      // UPDATE existing
+      this.api.updateAssetHistory(editEntry.id, payload).subscribe({
+        next: () => {
+          this.snackbar.open('Entry updated', 'Close', { duration: 2500 });
+          this.saving.set(false);
+          this.cancelForm();
+          this.refreshAll(asset.id);
+        },
+        error: () => {
+          this.snackbar.open('Failed to update entry', 'Close', { duration: 3000 });
+          this.saving.set(false);
+        }
+      });
+    } else {
+      // CREATE new
+      payload.asset = asset.id;
+      this.api.createAssetHistory(payload).subscribe({
+        next: () => {
+          this.snackbar.open('Entry added', 'Close', { duration: 2500 });
+          this.saving.set(false);
+          this.cancelForm();
+          this.refreshAll(asset.id);
+        },
+        error: () => {
+          this.snackbar.open('Failed to add entry', 'Close', { duration: 3000 });
+          this.saving.set(false);
+        }
+      });
+    }
+  }
+
+  private refreshAll(assetId: number): void {
+    // Refresh both asset (for metrics) and history (for grid + chart)
+    this.api.getAsset(assetId).subscribe(asset => this.asset.set(asset));
+    this.loadHistory(assetId);
+  }
+
+  deleteEntry(id: number): void {
+    if (!confirm('Are you sure you want to delete this historical valuation?')) return;
+
+    this.api.deleteAssetHistory(id).subscribe({
+      next: () => {
+        this.snackbar.open('Entry deleted', 'Close', { duration: 3000 });
+        const currentAsset = this.asset();
+        if (currentAsset) this.refreshAll(currentAsset.id);
+      },
+      error: () => {
+        this.snackbar.open('Failed to delete entry', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
   updateChartOptions(history: AssetValuationHistory[], isDark: boolean, asset: Asset): void {
     if (history.length === 0) {
       this.chartOptions.set({});
       return;
     }
 
-    // Sort history by date for chart
     const sortedData = [...history].sort((a, b) =>
       new Date(a.valuation_date).getTime() - new Date(b.valuation_date).getTime()
     );
@@ -262,13 +441,7 @@ export class AssetDetailsComponent implements OnInit {
           </div>`;
         }
       },
-      grid: {
-        left: '2%',
-        right: '4%',
-        bottom: '3%',
-        top: '10%',
-        containLabel: true
-      },
+      grid: { left: '2%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
       xAxis: {
         type: 'category',
         data: dates,
@@ -302,21 +475,6 @@ export class AssetDetailsComponent implements OnInit {
           }
         }
       }]
-    });
-  }
-
-  deleteEntry(id: number): void {
-    if (!confirm('Are you sure you want to delete this historical valuation?')) return;
-
-    this.api.deleteAssetHistory(id).subscribe({
-      next: () => {
-        this.snackbar.open('Entry deleted', 'Close', { duration: 3000 });
-        const currentAsset = this.asset();
-        if (currentAsset) this.loadHistory(currentAsset.id);
-      },
-      error: () => {
-        this.snackbar.open('Failed to delete entry', 'Close', { duration: 3000 });
-      }
     });
   }
 

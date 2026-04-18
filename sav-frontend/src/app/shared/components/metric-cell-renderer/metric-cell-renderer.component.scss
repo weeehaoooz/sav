@@ -1,0 +1,26 @@
+.metric-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+
+  .metric-icon {
+    font-size: inherit;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .metric-cell-val {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

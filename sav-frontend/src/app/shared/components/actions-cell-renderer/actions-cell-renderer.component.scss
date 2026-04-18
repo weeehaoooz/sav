@@ -1,0 +1,58 @@
+.actions-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  span.material-icons {
+    font-size: 18px;
+  }
+}
+
+/* Custom backgrounds if provided via style attribute or dynamic classes */
+.btn-edit {
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.12);
+  &:hover {
+    background: rgba(99, 102, 241, 0.2);
+  }
+}
+
+.btn-delete {
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.1);
+  &:hover {
+    background: rgba(244, 63, 94, 0.15);
+  }
+}
+
+.btn-history {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
+  &:hover {
+    background: rgba(52, 211, 153, 0.15);
+  }
+}
