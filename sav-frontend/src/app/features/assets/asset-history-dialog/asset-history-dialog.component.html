@@ -1,38 +1,44 @@
-<div class="header">
-  <div class="header-info">
-    <h2 mat-dialog-title>History: {{ data.asset.name }}</h2>
-    <p class="subtitle">{{ history().length }} valuation snapshots found</p>
+<div class="sav-dialog fade-in">
+  <header class="dialog-header">
+    <div class="title-area">
+      <h2 class="dialog-title">Valuation History</h2>
+      <span class="asset-name">{{ data.asset.name }}</span>
+    </div>
+    <button class="close-btn" (click)="dialogRef.close()" aria-label="Close">
+      <span class="material-icons">close</span>
+    </button>
+  </header>
+
+  <div class="dialog-body">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Syncing valuations...</p>
+      </div>
+    } @else if (history().length === 0) {
+      <div class="empty-state">
+        <span class="material-icons">history_toggle_off</span>
+        <p>No snapshots found</p>
+      </div>
+    } @else {
+      <div class="chart-wrapper glass-border">
+        <div echarts [options]="chartOptions()" [autoResize]="true" class="echarts-el"></div>
+      </div>
+
+      <div class="grid-wrapper glass-border">
+        <ag-grid-angular 
+          [theme]="gridTheme" 
+          [rowData]="history()" 
+          [columnDefs]="colDefs"
+          [defaultColDef]="{ sortable: true, resizable: true }" 
+          [animateRows]="true" 
+          [rowHeight]="52"
+          (gridReady)="onGridReady($event)" />
+      </div>
+    }
   </div>
-  <button mat-icon-button mat-dialog-close aria-label="Close dialog">
-    <mat-icon>close</mat-icon>
-  </button>
+
+  <footer class="dialog-footer">
+    <button class="sav-btn secondary" (click)="dialogRef.close()">Close Analytics</button>
+  </footer>
 </div>
-
-<mat-dialog-content class="dialog-content">
-  @if (loading()) {
-  <div class="loading-overlay">
-    <div class="spinner"></div>
-    <p>Fetching valuation history...</p>
-  </div>
-  } @else if (history().length === 0) {
-  <div class="empty-state">
-    <mat-icon>history_toggle_off</mat-icon>
-    <p>No historical data available for this asset.</p>
-    <small>Values will appear here as you update the asset over time.</small>
-  </div>
-  } @else {
-  <div class="chart-container glass">
-    <div echarts [options]="chartOptions()" [autoResize]="true" class="echarts-el"></div>
-  </div>
-
-  <div class="grid-container glass">
-    <ag-grid-angular [theme]="gridTheme" [rowData]="history()" [columnDefs]="colDefs"
-      [defaultColDef]="{ sortable: true, resizable: true }" [animateRows]="true" [rowHeight]="52"
-      (gridReady)="onGridReady($event)" />
-  </div>
-  }
-</mat-dialog-content>
-
-<mat-dialog-actions class="dialog-actions" align="end">
-  <button mat-button mat-dialog-close class="close-btn">Close</button>
-</mat-dialog-actions>

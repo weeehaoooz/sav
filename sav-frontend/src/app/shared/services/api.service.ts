@@ -40,6 +40,9 @@ export class ApiService {
   getAssets(): Observable<Asset[]> {
     return this.http.get<Asset[]>(`${this.base}/assets/`);
   }
+  getAsset(id: number): Observable<Asset> {
+    return this.http.get<Asset>(`${this.base}/assets/${id}/`);
+  }
   createAsset(data: Partial<Asset>): Observable<Asset> {
     return this.http.post<Asset>(`${this.base}/assets/`, data);
   }

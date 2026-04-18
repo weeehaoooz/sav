@@ -1,0 +1,74 @@
+<div class="page-content fade-in">
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading Asset Intel...</p>
+  </div>
+  } @else if (asset() !== null) {
+  
+  <header class="details-header">
+    <div class="header-main">
+      <button class="icon-btn back-btn" (click)="goBack()" title="Go Back">
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <div class="title-group">
+        <h1 class="asset-title">{{ asset()?.name }}</h1>
+        <div class="badge-row">
+          <span class="badge type-badge">{{ asset()?.asset_type }}</span>
+          <span class="badge cur-badge">{{ asset()?.currency }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Future actions like 'Edit' or 'Export' can go here -->
+    </div>
+  </header>
+
+  <section class="performance-summary">
+    @for (m of metrics(); track m.label) {
+      <div class="metric-block glass-hover">
+        <div class="metric-top">
+          <span class="m-label">{{ m.label }}</span>
+          <span class="material-icons m-icon" [style.color]="m.accentColor">{{ m.icon }}</span>
+        </div>
+        <div class="m-value number-mono">
+          @if (m.format === 'currency') {
+            {{ m.value | currency:asset()?.currency:'symbol':'1.2-2' }}
+          } @else if (m.format === 'percent') {
+            {{ (m.value >= 0 ? '+' : '') + m.value.toFixed(2) + '%' }}
+          } @else {
+            {{ m.value }}
+          }
+        </div>
+        <div class="m-subtitle">{{ m.subtitle }}</div>
+        <div class="accent-bar" [style.background]="m.accentColor"></div>
+      </div>
+    }
+  </section>
+
+  <div class="main-layout">
+    <div class="primary-view">
+      <div class="card-title">Valuation Trend</div>
+      <div class="chart-box glass">
+        <div echarts [options]="chartOptions()" [autoResize]="true" class="echarts-el"></div>
+      </div>
+    </div>
+
+    <div class="secondary-view">
+      <div class="card-title">History Snapshot</div>
+      <div class="grid-box glass">
+        <ag-grid-angular 
+          [theme]="gridTheme" 
+          [rowData]="history()" 
+          [columnDefs]="colDefs"
+          [defaultColDef]="{ sortable: true, resizable: true }" 
+          [animateRows]="true" 
+          [rowHeight]="52"
+          (gridReady)="onGridReady($event)" 
+          style="height: 500px; width: 100%;" />
+      </div>
+    </div>
+  </div>
+  }
+</div>

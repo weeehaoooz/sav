@@ -1,6 +1,6 @@
-import { Component, inject, signal, OnInit, computed, effect, untracked } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Component, inject, signal, OnInit, effect, untracked, computed } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -13,14 +13,15 @@ import { ApiService } from '../../../shared/services/api.service';
 import { ThemeService } from '../../../shared/services/theme.service';
 import { Asset, AssetValuationHistory } from '../../../shared/models/asset.model';
 import { savGridTheme } from '../../../shared/ag-grid-theme';
+import { MetricCardComponent, MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule]);
 
 @Component({
-  selector: 'app-asset-history-dialog',
+  selector: 'app-asset-details',
   standalone: true,
   imports: [
-    CommonModule, MatDialogModule, MatSnackBarModule, AgGridModule, NgxEchartsModule
+    CommonModule, AgGridModule, NgxEchartsModule, MatSnackBarModule
   ],
   providers: [
     {
@@ -28,21 +29,69 @@ ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule]);
       useValue: { echarts: () => import('echarts') }
     }
   ],
-  templateUrl: './asset-history-dialog.component.html',
-  styleUrls: ['./asset-history-dialog.component.scss']
+  templateUrl: './asset-details.component.html',
+  styleUrls: ['./asset-details.component.scss']
 })
-export class AssetHistoryDialogComponent implements OnInit {
+export class AssetDetailsComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly api = inject(ApiService);
   private readonly snackbar = inject(MatSnackBar);
   protected readonly themeService = inject(ThemeService);
-  readonly dialogRef = inject(MatDialogRef<AssetHistoryDialogComponent>);
-  readonly data = inject<{ asset: Asset }>(MAT_DIALOG_DATA);
 
   private gridApi!: GridApi;
   readonly gridTheme = savGridTheme;
+
+  readonly asset = signal<Asset | null>(null);
   readonly history = signal<AssetValuationHistory[]>([]);
   readonly loading = signal(true);
   readonly chartOptions = signal<EChartsOption>({});
+
+  readonly metrics = computed<MetricCardConfig[]>(() => {
+    const asset = this.asset();
+    if (!asset) return [];
+
+    const currency = asset.currency || 'SGD';
+    const currentVal = asset.current_value || 0;
+    const acqVal = asset.acquisition_value || 0;
+    const gainLoss = currentVal - acqVal;
+    const roi = acqVal > 0 ? (gainLoss / acqVal) * 100 : 0;
+
+    const items: MetricCardConfig[] = [
+      {
+        label: 'Current Value',
+        value: currentVal,
+        format: 'currency',
+        icon: 'payments',
+        accentColor: '#6366f1',
+        subtitle: `Latest valuation in ${currency}`,
+      }
+    ];
+
+    if (asset.asset_type !== 'bank' && asset.asset_type !== 'cpf') {
+      items.push(
+        {
+          label: 'Total Gain/Loss',
+          value: gainLoss,
+          format: 'currency',
+          icon: gainLoss >= 0 ? 'trending_up' : 'trending_down',
+          accentColor: gainLoss >= 0 ? '#34d399' : '#fb7185',
+          subtitle: 'All-time performance',
+        },
+        {
+          label: 'ROI',
+          value: roi,
+          format: 'percent',
+          icon: 'pie_chart',
+          accentColor: '#818cf8',
+          subtitle: 'Return on Investment',
+        }
+      );
+    }
+
+    return items;
+  });
 
   readonly colDefs: ColDef<AssetValuationHistory>[] = [
     {
@@ -58,8 +107,8 @@ export class AssetHistoryDialogComponent implements OnInit {
       flex: 1.3,
       cellRenderer: (p: any) => {
         const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.data.asset.currency;
-        if (this.data.asset.asset_type === 'cpf') {
+        const currency = this.asset()?.currency || 'SGD';
+        if (this.asset()?.asset_type === 'cpf') {
           return `
             <div class="cpf-cell-breakdown">
               <span class="main-val">${currency} ${val}</span>
@@ -74,22 +123,22 @@ export class AssetHistoryDialogComponent implements OnInit {
       field: 'acquisition_value',
       headerName: 'Acquisition',
       flex: 1.3,
-      hide: this.data.asset.asset_type === 'bank' || this.data.asset.asset_type === 'cpf',
+      hide: false, // Update below during fetch
       cellRenderer: (p: any) => {
         const val = Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.data.asset.currency;
+        const currency = this.asset()?.currency || 'SGD';
         return `<span style="font-weight: 400; color: var(--text-secondary)">${currency} ${val}</span>`;
       }
     },
     {
       headerName: 'Net G/L',
       flex: 1.2,
-      hide: this.data.asset.asset_type === 'bank' || this.data.asset.asset_type === 'cpf',
+      hide: false, // Update below during fetch
       valueGetter: (p) => (p.data?.current_value || 0) - (p.data?.acquisition_value || 0),
       cellRenderer: (p: any) => {
         const val = p.value;
         const formatted = Number(Math.abs(val)).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const currency = this.data.asset.currency;
+        const currency = this.asset()?.currency || 'SGD';
         const color = val >= 0 ? '#34d399' : '#fb7185';
         const icon = val >= 0 ? 'trending_up' : 'trending_down';
         const prefix = val >= 0 ? '+' : '-';
@@ -102,7 +151,7 @@ export class AssetHistoryDialogComponent implements OnInit {
       }
     },
     {
-      headerName: '',
+      headerName: 'Actions',
       width: 100,
       suppressHeaderMenuButton: true,
       sortable: false,
@@ -124,21 +173,52 @@ export class AssetHistoryDialogComponent implements OnInit {
     effect(() => {
       const data = this.history();
       const isDark = this.themeService.isDark();
-      untracked(() => this.updateChartOptions(data, isDark));
+      const currentAsset = this.asset();
+      if (currentAsset) {
+        untracked(() => this.updateChartOptions(data, isDark, currentAsset));
+      }
     });
   }
 
   ngOnInit(): void {
-    this.loadHistory();
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.loadAsset(Number(idParam));
+    } else {
+      this.goBack();
+    }
   }
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
   }
 
-  loadHistory(): void {
+  loadAsset(id: number): void {
     this.loading.set(true);
-    this.api.getAssetHistory(this.data.asset.id).subscribe({
+    this.api.getAsset(id).subscribe({
+      next: (asset) => {
+        this.asset.set(asset);
+        // Hide acquisition and Net G/L columns for bank and cpf
+        const type = asset.asset_type;
+        const hideCols = type === 'bank' || type === 'cpf';
+        this.colDefs[2].hide = hideCols;
+        this.colDefs[3].hide = hideCols;
+
+        if (this.gridApi) {
+          this.gridApi.setGridOption('columnDefs', this.colDefs);
+        }
+
+        this.loadHistory(id);
+      },
+      error: () => {
+        this.snackbar.open('Failed to load asset details', 'Close', { duration: 3000 });
+        this.goBack();
+      }
+    });
+  }
+
+  loadHistory(id: number): void {
+    this.api.getAssetHistory(id).subscribe({
       next: (data) => {
         this.history.set(data);
         this.loading.set(false);
@@ -150,8 +230,11 @@ export class AssetHistoryDialogComponent implements OnInit {
     });
   }
 
-  updateChartOptions(history: AssetValuationHistory[], isDark: boolean): void {
-    if (history.length === 0) return;
+  updateChartOptions(history: AssetValuationHistory[], isDark: boolean, asset: Asset): void {
+    if (history.length === 0) {
+      this.chartOptions.set({});
+      return;
+    }
 
     // Sort history by date for chart
     const sortedData = [...history].sort((a, b) =>
@@ -175,7 +258,7 @@ export class AssetHistoryDialogComponent implements OnInit {
           const p = params[0];
           return `<div style="padding: 4px">
             <div style="font-size: 11px; margin-bottom: 4px; color: ${textColor}">${p.name}</div>
-            <div style="font-weight: 600">${this.data.asset.currency} ${Number(p.value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div style="font-weight: 600">${asset.currency} ${Number(p.value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </div>`;
         }
       },
@@ -207,14 +290,14 @@ export class AssetHistoryDialogComponent implements OnInit {
         type: 'line',
         smooth: true,
         showSymbol: false,
-        lineStyle: { width: 3, color: '#6366f1' },
+        lineStyle: { width: 3, color: '#34d399' },
         areaStyle: {
           color: {
             type: 'linear',
             x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(99, 102, 241, 0.3)' },
-              { offset: 1, color: 'rgba(99, 102, 241, 0.05)' }
+              { offset: 0, color: 'rgba(52, 211, 153, 0.3)' },
+              { offset: 1, color: 'rgba(52, 211, 153, 0.05)' }
             ]
           }
         }
@@ -228,12 +311,16 @@ export class AssetHistoryDialogComponent implements OnInit {
     this.api.deleteAssetHistory(id).subscribe({
       next: () => {
         this.snackbar.open('Entry deleted', 'Close', { duration: 3000 });
-        this.loadHistory();
+        const currentAsset = this.asset();
+        if (currentAsset) this.loadHistory(currentAsset.id);
       },
       error: () => {
         this.snackbar.open('Failed to delete entry', 'Close', { duration: 3000 });
       }
     });
   }
-}
 
+  goBack(): void {
+    this.location.back();
+  }
+}

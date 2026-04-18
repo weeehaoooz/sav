@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -363,15 +364,9 @@ export class AssetsComponent implements OnInit {
     this.showForm.set(false);
   }
 
-  openHistory(asset: Asset): void {
-    const dialogRef = this.dialog.open(AssetHistoryDialogComponent, {
-      data: { asset },
-      width: '800px'
-    });
+  private readonly router = inject(Router);
 
-    dialogRef.afterClosed().subscribe(() => {
-      // Refresh assets in case history was deleted and master value changed
-      this.assetService.loadAssets();
-    });
+  openHistory(asset: Asset): void {
+    this.router.navigate(['/assets', asset.id]);
   }
 }

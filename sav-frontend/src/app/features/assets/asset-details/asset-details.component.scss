@@ -1,0 +1,194 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.details-header {
+  @include flex-between;
+  margin-bottom: $space-xl;
+  padding: 0 $space-xs;
+
+  .header-main {
+    display: flex;
+    align-items: center;
+    gap: $space-md;
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba($accent-indigo, 0.1);
+      border: 1px solid rgba($accent-indigo, 0.2);
+      color: $accent-indigo;
+      @include flex-center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+
+      &:hover {
+        background: rgba($accent-indigo, 0.2);
+        transform: translateX(-4px);
+      }
+
+      .material-icons { font-size: 22px; }
+    }
+
+    .title-group {
+      .asset-title {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, $text-primary 0%, color-mix(in srgb, $text-primary, transparent 40%) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .badge-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+
+        .badge {
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+
+          &.type-badge {
+            background: rgba($accent-indigo, 0.15);
+            color: color-mix(in srgb, $accent-indigo, white 20%);
+          }
+
+          &.cur-badge {
+            background: rgba($text-secondary, 0.1);
+            color: $text-secondary;
+          }
+        }
+      }
+    }
+  }
+}
+
+.performance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $space-lg;
+  margin-bottom: $space-xl;
+
+  .metric-block {
+    position: relative;
+    padding: $space-lg;
+    border-radius: $radius-lg;
+    overflow: hidden;
+    transition: transform $transition-base;
+
+    &:hover { transform: translateY(-4px); }
+
+    .metric-top {
+      @include flex-between;
+      margin-bottom: $space-xs;
+
+      .m-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .m-icon { font-size: 20px; opacity: 0.8; }
+    }
+
+    .m-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: $text-primary;
+    }
+
+    .m-subtitle {
+      font-size: 12px;
+      color: $text-secondary;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    .accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      opacity: 0.6;
+    }
+  }
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: $space-xl;
+  align-items: start;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: $space-md;
+    padding-left: $space-xs;
+  }
+
+  .chart-box {
+    height: 440px;
+    padding: $space-lg;
+    
+    echarts { height: 100%; width: 100%; }
+  }
+
+  .grid-box {
+    padding: $space-xs;
+    overflow: hidden;
+  }
+}
+
+.loading-state {
+  @include flex-center;
+  flex-direction: column;
+  height: 60vh;
+  gap: $space-md;
+  color: $text-secondary;
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba($accent-indigo, 0.1);
+    border-top-color: $accent-indigo;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+:host ::ng-deep {
+  .ag-theme-custom {
+    --ag-background-color: transparent;
+    --ag-header-background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .cpf-cell-breakdown {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    line-height: 1.4;
+
+    .main-val { font-weight: 600; color: $text-primary; }
+    .sub-vals { font-size: 10px; color: $text-secondary; opacity: 0.8; }
+  }
+}
