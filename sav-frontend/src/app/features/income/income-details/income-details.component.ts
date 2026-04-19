@@ -22,6 +22,7 @@ import { IncomeService } from '../../../shared/services/income.service';
 import { ThemeService } from '../../../shared/services/theme.service';
 import { CpfService } from '../../../shared/services/cpf.service';
 import { UserService } from '../../../shared/services/user.service';
+import { TaxService } from '../../../shared/services/tax.service';
 import { Income, Employment, Bonus, IncomeType } from '../../../shared/models/income.model';
 import { savGridTheme } from '../../../shared/ag-grid-theme';
 import { MetricCardComponent, MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
@@ -76,6 +77,7 @@ export class IncomeDetailsComponent implements OnInit {
   private readonly snackbar = inject(MatSnackBar);
   private readonly cpfService = inject(CpfService);
   private readonly userService = inject(UserService);
+  private readonly taxService = inject(TaxService);
   protected readonly themeService = inject(ThemeService);
 
   private gridApi!: GridApi;
@@ -183,10 +185,13 @@ export class IncomeDetailsComponent implements OnInit {
         subtitle: `Total annual gross pay`,
       });
 
+      let totalEmployeeCpfAnnual = 0;
+      let totalEmployerCpfAnnual = 0;
+
       if (emp.has_cpf) {
         const bonusCpf = this.cpfService.calculateBonusCpf(totalBonuses, age, annualBase, 0, activeMonths);
-        const totalEmployeeCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employee * activeMonths) + bonusCpf.employee;
-        const totalEmployerCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employer * activeMonths) + bonusCpf.employer;
+        totalEmployeeCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employee * activeMonths) + bonusCpf.employee;
+        totalEmployerCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employer * activeMonths) + bonusCpf.employer;
         const netAnnual = totalAnnualGross - totalEmployeeCpfAnnual;
 
         items.push({
@@ -215,6 +220,29 @@ export class IncomeDetailsComponent implements OnInit {
           icon: 'pie_chart',
           accentColor: '#ec4899',
           subtitle: `${bonusWeight.toFixed(1)}% from variable pay`,
+        });
+      }
+
+      const chargeableIncome = totalAnnualGross - totalEmployeeCpfAnnual;
+      const annualTax = this.taxService.calculateAnnualTax(chargeableIncome);
+
+      items.push({
+        label: 'Estim. Annual Tax',
+        value: annualTax,
+        format: 'currency',
+        icon: 'receipt_long',
+        accentColor: '#ef4444',
+        subtitle: `Based on current income`,
+      });
+
+      if (annualTax > 0 && activeMonths > 0) {
+        items.push({
+          label: 'Mo. Tax Provision',
+          value: annualTax / activeMonths,
+          format: 'currency',
+          icon: 'event_note',
+          accentColor: '#f97316',
+          subtitle: 'Suggested monthly set-aside',
         });
       }
     }
