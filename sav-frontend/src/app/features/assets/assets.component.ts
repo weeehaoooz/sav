@@ -61,6 +61,7 @@ export class AssetsComponent implements OnInit {
   readonly isQuickEdit = signal(false);
   readonly selectedAssetForEdit = signal<Asset | null>(null);
   readonly saving = signal(false);
+  readonly importing = signal(false);
 
   readonly displayAssets = computed(() => {
     const assets = this.state.assets();
@@ -393,6 +394,94 @@ export class AssetsComponent implements OnInit {
 
   cancelForm(): void {
     this.showForm.set(false);
+  }
+
+  triggerCsvImport(): void {
+    const fileInput = document.getElementById('csvFileInput') as HTMLInputElement;
+    if (fileInput) fileInput.click();
+  }
+
+  downloadTemplate(): void {
+    const headers = ['name', 'asset_type', 'current_value', 'acquisition_value', 'valuation_date', 'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra'];
+    const example = ['DBS Savings', 'bank', '50000', '50000', new Date().toISOString().split('T')[0], '0', '0', '0', '0'];
+    const csvContent = [headers.join(','), example.join(',')].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'assets_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const content = e.target.result;
+      this.parseAndImportCsv(content);
+      // Reset input
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  private parseAndImportCsv(content: string): void {
+    const lines = content.split('\n').filter(line => line.trim());
+    if (lines.length < 2) {
+      this.snackbar.open('CSV file is empty or missing header', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const assets: any[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length < headers.length) continue;
+
+      const asset: any = {};
+      headers.forEach((header, index) => {
+        const val = values[index];
+        if (header === 'name') asset.name = val;
+        else if (header === 'asset_type') asset.asset_type = val;
+        else if (header === 'current_value') asset.current_value = Number(val);
+        else if (header === 'acquisition_value') asset.acquisition_value = Number(val);
+        else if (header === 'valuation_date') asset.valuation_date = val;
+        else if (header === 'cpf_oa') asset.cpf_oa = Number(val);
+        else if (header === 'cpf_sa') asset.cpf_sa = Number(val);
+        else if (header === 'cpf_ma') asset.cpf_ma = Number(val);
+        else if (header === 'cpf_ra') asset.cpf_ra = Number(val);
+      });
+
+      if (asset.name && asset.asset_type) {
+        assets.push(asset);
+      }
+    }
+
+    if (assets.length === 0) {
+      this.snackbar.open('No valid assets found in CSV', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.importing.set(true);
+    this.api.bulkCreateAssets(assets).subscribe({
+      next: (created) => {
+        created.forEach(a => this.assetService.addAsset(a));
+        this.importing.set(false);
+        this.snackbar.open(`Successfully imported ${created.length} assets`, 'Close', { duration: 3000 });
+      },
+      error: (err) => {
+        console.error('Import failed:', err);
+        this.importing.set(false);
+        this.snackbar.open('Failed to import assets. Please check CSV format.', 'Close', { duration: 5000 });
+      }
+    });
   }
 
   private readonly router = inject(Router);

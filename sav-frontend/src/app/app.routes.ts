@@ -49,8 +49,8 @@ export const routes: Routes = [
         loadComponent: () => import('./accounts/family/family.component').then(m => m.FamilyComponent),
       },
       {
-        path: 'profile',
-        loadComponent: () => import('./accounts/profile/profile.component').then(m => m.ProfileComponent),
+        path: 'settings',
+        loadComponent: () => import('./accounts/settings/settings.component').then(m => m.SettingsComponent),
       },
       {
         path: 'accounts',

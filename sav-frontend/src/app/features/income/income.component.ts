@@ -1,86 +1,97 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AgGridModule } from 'ag-grid-angular';
 import { ColDef, ModuleRegistry, ClientSideRowModelModule, TooltipModule, ValidationModule } from 'ag-grid-community';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule, ValidationModule]);
-
 import { StateService } from '../../shared/services/state.service';
 import { ApiService } from '../../shared/services/api.service';
-import { ThemeService } from '../../shared/services/theme.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { savGridTheme } from '../../shared/ag-grid-theme';
-import { Income, IncomeType, Frequency } from '../../shared/models/income.model';
+import { Income } from '../../shared/models/income.model';
 import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
+import { IncomeFormComponent } from './components/income-form/income-form.component';
+
+ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule, ValidationModule]);
 
 @Component({
   selector: 'app-income',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule,
-    MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatSnackBarModule, AgGridModule,
-    PageHeaderComponent, MetricCardComponent, ActionsCellRendererComponent
+    CommonModule, MatSnackBarModule, AgGridModule,
+    PageHeaderComponent, MetricCardComponent,
+    IncomeFormComponent, ActionsCellRendererComponent
   ],
   templateUrl: './income.component.html',
   styleUrls: ['./income.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IncomeComponent {
+export class IncomeComponent implements OnInit {
   readonly state = inject(StateService);
   private readonly api = inject(ApiService);
-  private readonly themeService = inject(ThemeService);
   private readonly snackbar = inject(MatSnackBar);
-  private readonly fb = inject(FormBuilder);
 
   readonly gridTheme = savGridTheme;
 
   readonly showForm = signal(false);
-  readonly editingId = signal<number | null>(null);
+  readonly editingItem = signal<Income | null>(null);
   readonly saving = signal(false);
 
-  readonly incomeTypes: { value: IncomeType; label: string }[] = [
-    { value: 'salary', label: 'Salary' },
-    { value: 'bonus', label: 'Bonus' },
-    { value: 'dividends', label: 'Dividends' },
-    { value: 'rental', label: 'Rental Income' },
-    { value: 'side_income', label: 'Side Income' },
-    { value: 'cpf_contribution', label: 'CPF Contribution' },
-    { value: 'other', label: 'Other' },
+  ngOnInit(): void {
+    // CPF fields are synced in StateService
+  }
+
+  readonly incomeTypes = [
+    { value: 'salary', label: 'Full-time Employment' }
   ];
 
-  readonly frequencies: { value: Frequency; label: string }[] = [
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'quarterly', label: 'Quarterly' },
-    { value: 'annually', label: 'Annually' },
-    { value: 'one_off', label: 'One-off' },
-  ];
-
-  readonly incomeForm = this.fb.group({
-    name: ['', Validators.required],
-    account: [null as number | null],
-    income_type: ['salary' as IncomeType, Validators.required],
-    amount: [0, [Validators.required, Validators.min(0)]],
-    frequency: ['monthly' as Frequency, Validators.required],
-    growth_rate: [0.03],
-    volatility: [0],
-    notes: [''],
-  });
+  readonly cpfRules = {
+    '55': { employer: 17, employee: 20 },
+    '56': { employer: 16, employee: 18 },
+    '57': { employer: 16, employee: 18 },
+    '58': { employer: 16, employee: 18 },
+    '59': { employer: 16, employee: 18 },
+    '60': { employer: 16, employee: 18 },
+    '61': { employer: 12.5, employee: 12.5 },
+    '62': { employer: 12.5, employee: 12.5 },
+    '63': { employer: 12.5, employee: 12.5 },
+    '64': { employer: 12.5, employee: 12.5 },
+    '65': { employer: 9, employee: 7.5 },
+    '66': { employer: 9, employee: 7.5 },
+    '67': { employer: 9, employee: 7.5 },
+    '68': { employer: 9, employee: 7.5 },
+    '69': { employer: 9, employee: 7.5 },
+    '70': { employer: 7.5, employee: 5 },
+    '71': { employer: 7.5, employee: 5 },
+    '72': { employer: 7.5, employee: 5 },
+    '73': { employer: 7.5, employee: 5 },
+    '74': { employer: 7.5, employee: 5 },
+    '75': { employer: 7.5, employee: 5 },
+    '76': { employer: 7.5, employee: 5 },
+    '77': { employer: 7.5, employee: 5 },
+    '78': { employer: 7.5, employee: 5 },
+    '79': { employer: 7.5, employee: 5 },
+    '80': { employer: 7.5, employee: 5 },
+  };
 
   readonly colDefs: ColDef<Income>[] = [
-    { field: 'name', headerName: 'Income Source', flex: 2 },
+    {
+      field: 'name', headerName: 'Income Source', flex: 1.5, cellRenderer: (p: any) => `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>${p.value}</span>
+        ${p.data.has_cpf ? '<span style="font-size: 10px; background: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold;">CPF</span>' : ''}
+      </div>
+    `},
+    { field: 'company', headerName: 'Company', flex: 1 },
     { field: 'income_type', headerName: 'Type', flex: 1, valueFormatter: p => this.incomeTypes.find(t => t.value === p.value)?.label ?? p.value },
     { field: 'account_name', headerName: 'Account', flex: 1 },
     { field: 'amount', headerName: 'Amount', flex: 1, type: 'rightAligned', valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-    { field: 'frequency', headerName: 'Frequency', flex: 1 },
+    { field: 'frequency', headerName: 'Frequency', flex: 0.8 },
     { field: 'monthly_equivalent', headerName: 'Monthly', flex: 1, type: 'rightAligned', cellStyle: { color: '#34d399' }, valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+    { field: 'take_home_amount', headerName: 'Take Home', flex: 1, type: 'rightAligned', cellStyle: { color: '#10b981' }, valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+    { field: 'additional_contributions', headerName: 'Employer CPF', flex: 1, type: 'rightAligned', cellStyle: { color: '#0ea5e9' }, valueFormatter: p => `SGD ${Number(p.value ?? 0).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
     {
       headerName: 'Actions',
       flex: 0.8,
@@ -114,26 +125,24 @@ export class IncomeComponent {
   ]);
 
   openCreate(): void {
-    this.editingId.set(null);
-    this.incomeForm.reset({ income_type: 'salary', frequency: 'monthly', growth_rate: 0.03 });
+    this.editingItem.set(null);
     this.showForm.set(true);
   }
 
   openEdit(item: Income): void {
-    this.editingId.set(item.id);
-    this.incomeForm.patchValue({ ...item, account: item.account as unknown as number });
+    this.editingItem.set(item);
     this.showForm.set(true);
   }
 
-  save(): void {
-    if (this.incomeForm.invalid) return;
+  onSave(data: any): void {
     this.saving.set(true);
-    const data = this.incomeForm.value as any;
-    const id = this.editingId();
+    const item = this.editingItem();
+    const id = item?.id;
     const obs = id ? this.api.updateIncome(id, data) : this.api.createIncome(data);
+
     obs.subscribe({
-      next: (item) => {
-        if (id) this.state.updateIncome(item); else this.state.addIncome(item);
+      next: (newItem) => {
+        if (id) this.state.updateIncome(newItem); else this.state.addIncome(newItem);
         this.showForm.set(false);
         this.saving.set(false);
         this.snackbar.open(id ? 'Updated' : 'Added', 'Close', { duration: 3000 });
@@ -147,4 +156,5 @@ export class IncomeComponent {
   }
 
   cancelForm(): void { this.showForm.set(false); }
+
 }

@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { UserService } from '../../../../shared/services/user.service';
+import { ApiService } from '../../../../shared/services/api.service';
 
 @Component({
   selector: 'app-account-details',
@@ -28,6 +29,7 @@ export class AccountDetailsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly auth = inject(AuthService);
   readonly userService = inject(UserService);
+  private readonly api = inject(ApiService);
 
   profileForm = this.fb.group({
     username: ['', Validators.required],
@@ -54,15 +56,25 @@ export class AccountDetailsComponent implements OnInit {
   updateProfile(): void {
     if (this.profileForm.invalid) return;
     this.loadingProfile.set(true);
-    // Call backend API here (ProfileView)
-    // For now we simulate
-    setTimeout(() => {
-      this.loadingProfile.set(false);
-      this.message.set({ type: 'success', text: 'Profile updated successfully' });
-      
-      // Auto-clear message after 3s
-      setTimeout(() => this.message.set(null), 3000);
-    }, 1000);
+
+    const values = this.profileForm.value;
+
+    this.api.updateProfile(values as any).subscribe({
+      next: (user) => {
+        this.loadingProfile.set(false);
+        // Update local auth service state
+        localStorage.setItem('sav_user', JSON.stringify(user));
+        this.auth.currentUser.set(user);
+
+        this.message.set({ type: 'success', text: 'Profile updated successfully' });
+        setTimeout(() => this.message.set(null), 3000);
+      },
+      error: (err) => {
+        this.loadingProfile.set(false);
+        this.message.set({ type: 'error', text: 'Failed to update profile' });
+        setTimeout(() => this.message.set(null), 3000);
+      }
+    });
   }
 
   onAccountSwitch(accountId: number): void {

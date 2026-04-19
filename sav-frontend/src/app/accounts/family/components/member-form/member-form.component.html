@@ -1,0 +1,56 @@
+<div class="form-header">
+  <h4>{{ account ? 'Edit Member' : 'Add Family Member' }}</h4>
+  <button mat-icon-button (click)="onCancel()"><mat-icon>close</mat-icon></button>
+</div>
+
+<form [formGroup]="memberForm" (ngSubmit)="onSubmit()" class="member-form">
+  <mat-form-field appearance="fill">
+    <mat-label>Display Name</mat-label>
+    <input matInput formControlName="display_name" placeholder="e.g. Alice" />
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Account Type</mat-label>
+    <mat-select formControlName="account_type">
+      @for (t of accountTypes; track t.value) { 
+        <mat-option [value]="t.value">{{ t.label }}</mat-option> 
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Role / Access Level</mat-label>
+    <mat-select formControlName="role">
+      @for (r of accountRoles; track r.value) { 
+        <mat-option [value]="r.value">{{ r.label }}</mat-option> 
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Date of Birth</mat-label>
+    <input matInput type="date" formControlName="date_of_birth" />
+  </mat-form-field>
+
+  <div class="color-picker-field">
+    <label class="color-label">Avatar Color</label>
+    <div class="color-options">
+      @for (c of avatarColors; track c) {
+        <button type="button" class="color-dot" [style.backgroundColor]="c"
+          [class.selected]="memberForm.get('avatar_color')?.value === c"
+          (click)="selectColor(c)">
+          @if (memberForm.get('avatar_color')?.value === c) {
+            <mat-icon>check</mat-icon>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="memberForm.invalid || saving">
+      {{ saving ? 'Saving…' : (account ? 'Update' : 'Add Member') }}
+    </button>
+  </div>
+</form>

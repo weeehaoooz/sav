@@ -68,10 +68,6 @@ export class CpfAssetFormComponent implements OnInit {
     });
   }
 
-  get userAge(): number {
-    return this.userService.selectedAccount()?.age ?? 0;
-  }
-
   onSubmit() {
     if (this.form.valid) {
       const rawValue = this.form.value;

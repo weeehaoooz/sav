@@ -1,0 +1,32 @@
+<div class="form-panel glass fade-in">
+  <div class="form-header">
+    <h4>{{ item ? 'Edit Employment Income' : 'New Employment Income' }}</h4>
+    <button mat-icon-button (click)="cancel.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <form [formGroup]="incomeForm" (ngSubmit)="onSubmit()" class="income-form">
+    <div class="form-sections">
+      <section class="form-section">
+        <h5>General Information</h5>
+        <app-employment-general-info 
+          [form]="incomeForm" 
+          [accounts]="user.accounts()" 
+          [incomeTypes]="incomeTypes" />
+      </section>
+
+      <section class="form-section">
+        <h5>Financial Details</h5>
+        <app-employment-financials 
+          [form]="incomeForm" 
+          [frequencies]="frequencies" />
+      </section>
+    </div>
+
+    <div class="form-actions">
+      <button mat-button type="button" (click)="cancel.emit()">Cancel</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving" id="income-save-btn">
+        {{ saving ? 'Saving…' : (item ? 'Update' : 'Add') }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -73,7 +73,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'api.CustomUser'
+AUTH_USER_MODEL = 'api.User'
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -122,6 +122,7 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE': 'sav-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'sav-refresh-token',
     'JWT_AUTH_HTTPONLY': False,  # Allow JS to read if needed for debugging, but HTTPOnly is safer
+    'REGISTER_SERIALIZER': 'api.serializers.users.CustomRegisterSerializer',
 }
 
 # allauth settings

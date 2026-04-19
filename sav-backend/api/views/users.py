@@ -1,20 +1,20 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from api.models import CustomUser
-from api.serializers.users import CustomUserSerializer
+from api.models import User
+from api.serializers.users import UserSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 class ProfileView(APIView):
     def get(self, request):
-        serializer = CustomUserSerializer(request.user)
+        serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
     def patch(self, request):
-        serializer = CustomUserSerializer(request.user, data=request.data, partial=True)
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

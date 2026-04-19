@@ -5,10 +5,10 @@ import { AccountDetailsComponent } from './components/account-details/account-de
 import { SecurityComponent } from './components/security/security.component';
 import { PreferencesComponent } from './components/preferences/preferences.component';
 
-type ProfileTab = 'account' | 'security' | 'preferences';
+type SettingsTab = 'account' | 'security' | 'preferences';
 
 @Component({
-  selector: 'app-profile',
+  selector: 'app-settings',
   standalone: true,
   imports: [
     CommonModule,
@@ -17,13 +17,13 @@ type ProfileTab = 'account' | 'security' | 'preferences';
     SecurityComponent,
     PreferencesComponent
   ],
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  templateUrl: './settings.component.html',
+  styleUrls: ['./settings.component.scss']
 })
-export class ProfileComponent {
-  activeTab = signal<ProfileTab>('account');
+export class SettingsComponent {
+  activeTab = signal<SettingsTab>('account');
 
-  setTab(tab: ProfileTab): void {
+  setTab(tab: SettingsTab): void {
     this.activeTab.set(tab);
   }
 }

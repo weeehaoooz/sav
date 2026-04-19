@@ -1,0 +1,16 @@
+<div [formGroup]="form" class="sub-form-group">
+  <mat-form-field appearance="fill">
+    <mat-label>Amount (SGD)</mat-label>
+    <input matInput type="number" formControlName="amount" placeholder="0.00" />
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Frequency</mat-label>
+    <mat-select formControlName="frequency">
+      @for (freq of frequencies; track freq.value) {
+        <mat-option [value]="freq.value">{{ freq.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+</div >

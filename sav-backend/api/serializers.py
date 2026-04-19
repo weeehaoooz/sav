@@ -8,10 +8,14 @@ from api.models import (
 # ── User ──────────────────────────────────────────────────────────────────────
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    """User serializer without family_id (enforced one-to-one with Account)."""
+    accounts = AccountSerializer(many=True, read_only=True)
+    profile = AccountSerializer(read_only=True)
+
     class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'family_id']
-        read_only_fields = ['family_id']
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile', 'accounts']
+        read_only_fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile']
 
 
 # ── Account ───────────────────────────────────────────────────────────────────
@@ -136,18 +140,7 @@ class LiabilitySerializer(serializers.ModelSerializer):
 
 # ── Income ────────────────────────────────────────────────────────────────────
 
-class IncomeSerializer(serializers.ModelSerializer):
-    account_name = serializers.CharField(source='account.display_name', read_only=True)
-    monthly_equivalent = serializers.ReadOnlyField()
-
-    class Meta:
-        model = Income
-        fields = [
-            'id', 'account', 'account_name', 'name', 'income_type',
-            'amount', 'frequency', 'growth_rate', 'volatility',
-            'is_active', 'notes', 'monthly_equivalent', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
+# Note: Use IncomeSerializer from api.serializers.incomes for consistent field handling
 
 
 # ── Expense ───────────────────────────────────────────────────────────────────

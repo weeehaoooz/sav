@@ -1,0 +1,72 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.form-header {
+  @include flex-between;
+  margin-bottom: $space-md;
+
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    margin: 0;
+  }
+}
+
+.member-form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.color-picker-field {
+  padding-bottom: $space-sm;
+
+  .color-label {
+    font-size: $font-size-sm;
+    color: $text-muted;
+    margin-bottom: $space-xs;
+    display: block;
+  }
+}
+
+.color-options {
+  display: flex;
+  gap: $space-sm;
+  flex-wrap: wrap;
+
+  .color-dot {
+    @include button-reset;
+    width: 28px;
+    height: 28px;
+    border-radius: $radius-full;
+    @include flex-center;
+    transition: transform $transition-fast;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #fff;
+    }
+
+    &.selected {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 2px $bg-primary, 0 0 0 4px rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: $space-sm;
+  justify-content: flex-end;
+  margin-top: $space-sm;
+}

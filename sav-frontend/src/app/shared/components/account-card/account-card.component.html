@@ -1,0 +1,49 @@
+<div class="account-card glass-hover fade-in">
+  <div class="card-header">
+    <div class="avatar-container">
+      <div class="avatar" [style.backgroundColor]="account.avatar_color">
+        {{ getInitials(account.display_name) }}
+      </div>
+      <div class="pulse-ring" [style.borderColor]="account.avatar_color"></div>
+    </div>
+    
+    <div class="actions-group">
+      <button class="icon-btn edit-btn" (click)="onEdit()" matTooltip="Edit Member">
+        <mat-icon>edit</mat-icon>
+      </button>
+      @if (account.account_type !== 'primary') {
+        <button class="icon-btn delete-btn" (click)="onDelete()" matTooltip="Remove Member">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="card-content">
+    <h3 class="member-name">{{ account.display_name }}</h3>
+    
+    <div class="tag-row">
+      <span class="type-tag" [attr.data-type]="account.account_type">
+        {{ account.account_type.replace('_', ' ') }}
+      </span>
+      <span class="role-tag">
+        {{ account.role.replace('_', ' ') }}
+      </span>
+    </div>
+
+    <div class="meta-info">
+      @if (age !== null) {
+        <div class="info-item">
+          <mat-icon class="info-icon">cake</mat-icon>
+          <span class="info-label">Age</span>
+          <span class="info-value">{{ age }} years</span>
+        </div>
+      }
+      <div class="info-item">
+        <mat-icon class="info-icon">account_balance_wallet</mat-icon>
+        <span class="info-label">Assets Owned</span>
+        <span class="info-value">—</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -106,6 +106,30 @@
           }
         }
 
+        &.import-btn {
+          border-color: rgba($accent-indigo, 0.2);
+          background: rgba($accent-indigo, 0.05);
+          color: $accent-indigo;
+
+          &:hover {
+            background: rgba($accent-indigo, 0.15);
+            border-color: rgba($accent-indigo, 0.4);
+            box-shadow: 0 4px 16px rgba($accent-indigo, 0.15);
+          }
+        }
+
+        &.template-btn {
+          border-color: rgba($text-secondary, 0.1);
+          background: rgba($text-secondary, 0.05);
+          color: $text-secondary;
+
+          &:hover {
+            background: rgba($text-secondary, 0.1);
+            border-color: rgba($text-secondary, 0.2);
+            box-shadow: 0 4px 12px rgba($text-secondary, 0.1);
+          }
+        }
+
         &.active {
           background: rgba($accent-rose, 0.1);
           border-color: rgba($accent-rose, 0.3);

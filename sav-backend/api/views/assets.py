@@ -12,6 +12,39 @@ class AssetViewSet(viewsets.ModelViewSet):
             return AssetWriteSerializer
         return AssetSerializer
 
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request):
+        assets_data = request.data
+        if not isinstance(assets_data, list):
+            return Response({"error": "Expected a list of assets"}, status=400)
+
+        created_assets = []
+        # Get the primary account for the current user
+        # In this system, user.profile points to their primary Account
+        user_profile = getattr(request.user, 'profile', None)
+        
+        from django.db import transaction
+        with transaction.atomic():
+            for data in assets_data:
+                serializer = AssetWriteSerializer(data=data)
+                if serializer.is_valid():
+                    asset = serializer.save()
+                    
+                    # Create ownership for the current user's profile if it exists
+                    if user_profile:
+                        from api.models import AssetOwnership
+                        AssetOwnership.objects.get_or_create(
+                            asset=asset,
+                            account=user_profile,
+                            defaults={'ownership_percentage': 100}
+                        )
+                    
+                    created_assets.append(AssetSerializer(asset).data)
+                else:
+                    return Response(serializer.errors, status=400)
+
+        return Response(created_assets, status=201)
+
     @action(detail=True, methods=['get'], url_path='distribution-rules')
     def distribution_rules(self, request, pk=None):
         asset = self.get_object()

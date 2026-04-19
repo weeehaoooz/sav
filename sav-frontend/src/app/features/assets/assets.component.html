@@ -22,6 +22,19 @@
           <span>{{ isQuickEdit() ? 'Exit Quick Edit' : 'Quick Edit' }}</span>
         </button>
 
+        <input type="file" id="csvFileInput" style="display: none" (change)="onFileSelected($event)" accept=".csv">
+        <button class="action-btn import-btn" (click)="triggerCsvImport()" [disabled]="importing()"
+          matTooltip="Import assets from CSV file">
+          <span class="material-icons">{{ importing() ? 'sync' : 'upload_file' }}</span>
+          <span>{{ importing() ? 'Importing...' : 'Import CSV' }}</span>
+        </button>
+
+        <button class="action-btn template-btn" (click)="downloadTemplate()"
+          matTooltip="Download CSV Template">
+          <span class="material-icons">download</span>
+          <span>Template</span>
+        </button>
+
         <button class="action-btn add-btn" (click)="showForm() ? cancelForm() : openCreate()"
           [class.active]="showForm()">
           <span class="material-icons">{{ showForm() ? 'close' : 'add_circle' }}</span>

@@ -1,4 +1,4 @@
-from .users import CustomUser
+from .users import User
 from .accounts import Account
 from .assets import Asset, AssetOwnership, AssetValuationHistory
 from .liabilities import Liability
@@ -7,7 +7,7 @@ from .expenses import Expense
 from .simulations import Simulation, DistributionRule
 
 __all__ = [
-    'CustomUser',
+    'User',
     'Account',
     'Asset',
     'AssetOwnership',

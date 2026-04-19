@@ -21,6 +21,9 @@ export class ApiService {
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.base}/users/`);
   }
+  updateProfile(data: Partial<User>): Observable<User> {
+    return this.http.patch<User>(`${this.base}/profile/`, data);
+  }
 
   // ── Accounts ─────────────────────────────────────────────────────────────
   getAccounts(): Observable<Account[]> {
@@ -51,6 +54,9 @@ export class ApiService {
   }
   deleteAsset(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/assets/${id}/`);
+  }
+  bulkCreateAssets(assets: any[]): Observable<Asset[]> {
+    return this.http.post<Asset[]>(`${this.base}/assets/bulk-create/`, assets);
   }
   getAssetHistory(assetId: number): Observable<AssetValuationHistory[]> {
     return this.http.get<AssetValuationHistory[]>(`${this.base}/assets/${assetId}/history/`);

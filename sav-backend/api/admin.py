@@ -1,21 +1,23 @@
 from django.contrib import admin
 from api.models import (
-    CustomUser, Account, Asset, AssetOwnership, AssetValuationHistory,
+    User, Account, Asset, AssetOwnership, AssetValuationHistory,
     Liability, Income, Expense, Simulation, DistributionRule
 )
 
 
-@admin.register(CustomUser)
+@admin.register(User)
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ['username', 'email', 'family_id', 'is_active']
+    list_display = ['username', 'email', 'is_active']
     search_fields = ['username', 'email']
+    # filter_horizontal = ['accounts']  # Not a ManyToManyField
 
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ['display_name', 'account_type', 'role', 'user', 'date_of_birth']
+    list_display = ['display_name', 'account_type', 'role', 'user', 'age']
     list_filter = ['account_type', 'role']
-    search_fields = ['display_name']
+    search_fields = ['display_name', 'user__email']
+    readonly_fields = ['age', 'created_at', 'updated_at']
 
 
 @admin.register(Asset)

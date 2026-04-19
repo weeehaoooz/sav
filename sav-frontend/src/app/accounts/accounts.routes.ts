@@ -10,8 +10,8 @@ export const routes: Routes = [
     loadComponent: () => import('./family/family.component').then(m => m.FamilyComponent)
   },
   {
-    path: 'profile',
-    loadComponent: () => import('./profile/profile.component').then(m => m.ProfileComponent)
+    path: 'settings',
+    loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent)
   },
-  { path: '', redirectTo: 'profile', pathMatch: 'full' }
+  { path: '', redirectTo: 'settings', pathMatch: 'full' }
 ];

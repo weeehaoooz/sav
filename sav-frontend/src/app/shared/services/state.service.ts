@@ -85,12 +85,77 @@ export class StateService {
   // ── Mutations — Income ────────────────────────────────────────────────
   addIncome(item: Income): void {
     this._income.update(list => [item, ...list]);
+    this.syncCPFFields(item);
   }
   updateIncome(updated: Income): void {
     this._income.update(list => list.map(i => i.id === updated.id ? updated : i));
+    this.syncCPFFields(updated);
   }
   removeIncome(id: number): void {
     this._income.update(list => list.filter(i => i.id !== id));
+  }
+
+  private syncCPFFields(item: Income): void {
+    if (!item.has_cpf || !item.dob) {
+      item.take_home_amount = 0;
+      item.additional_contributions = 0;
+      return;
+    }
+    const dob = new Date(item.dob);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = (today.getMonth() + 1) - (dob.getMonth() + 1);
+    const dayDiff = today.getDate() - dob.getDate();
+
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+    }
+    if (age < 55) {
+      item.take_home_amount = item.monthly_equivalent;
+      item.additional_contributions = 0;
+      return;
+    }
+
+    const rules = {
+      '55': { employer: 17, employee: 20 },
+      '56': { employer: 16, employee: 18 },
+      '57': { employer: 16, employee: 18 },
+      '58': { employer: 16, employee: 18 },
+      '59': { employer: 16, employee: 18 },
+      '60': { employer: 16, employee: 18 },
+      '61': { employer: 12.5, employee: 12.5 },
+      '62': { employer: 12.5, employee: 12.5 },
+      '63': { employer: 12.5, employee: 12.5 },
+      '64': { employer: 12.5, employee: 12.5 },
+      '65': { employer: 9, employee: 7.5 },
+      '66': { employer: 9, employee: 7.5 },
+      '67': { employer: 9, employee: 7.5 },
+      '68': { employer: 9, employee: 7.5 },
+      '69': { employer: 9, employee: 7.5 },
+      '70': { employer: 7.5, employee: 5 },
+      '71': { employer: 7.5, employee: 5 },
+      '72': { employer: 7.5, employee: 5 },
+      '73': { employer: 7.5, employee: 5 },
+      '74': { employer: 7.5, employee: 5 },
+      '75': { employer: 7.5, employee: 5 },
+      '76': { employer: 7.5, employee: 5 },
+      '77': { employer: 7.5, employee: 5 },
+      '78': { employer: 7.5, employee: 5 },
+      '79': { employer: 7.5, employee: 5 },
+      '80': { employer: 7.5, employee: 5 },
+    } as Readonly<Record<string, { employer: number; employee: number }>>;
+
+    const ageStr = age.toString();
+    const rulesData = rules[ageStr] || rules['80'];
+
+    const employeeRate = rulesData.employee / 100;
+    const employerRate = rulesData.employer / 100;
+
+    const employeeCPF = item.monthly_equivalent * employeeRate;
+    const employerCPF = item.monthly_equivalent * employerRate;
+
+    item.take_home_amount = item.monthly_equivalent - employeeCPF;
+    item.additional_contributions = employerCPF;
   }
 
   // ── Mutations — Expenses ──────────────────────────────────────────────

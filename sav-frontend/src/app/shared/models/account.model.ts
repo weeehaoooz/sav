@@ -7,9 +7,8 @@ export interface Account {
   display_name: string;
   account_type: AccountType;
   role: AccountRole;
-  date_of_birth: string | null;
   avatar_color: string;
-  age: number | null;
+  date_of_birth?: string | null;
   created_at: string;
   updated_at: string;
 }
