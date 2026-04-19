@@ -24,7 +24,7 @@ import { CpfService } from '../../../shared/services/cpf.service';
 import { UserService } from '../../../shared/services/user.service';
 import { Income, Employment, Bonus, IncomeType } from '../../../shared/models/income.model';
 import { savGridTheme } from '../../../shared/ag-grid-theme';
-import { MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
+import { MetricCardComponent, MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
 import { ActionsCellRendererComponent, ActionCellRendererParams } from '../../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
 import { MetricCellRendererComponent } from '../../../shared/components/metric-cell-renderer/metric-cell-renderer.component';
 
@@ -40,7 +40,8 @@ ModuleRegistry.registerModules([
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    AgGridModule, NgxEchartsModule, MatSnackBarModule, MatButtonModule, MatIconModule, MatTooltipModule
+    AgGridModule, NgxEchartsModule, MatSnackBarModule, MatButtonModule, MatIconModule, MatTooltipModule,
+    MetricCardComponent
   ],
   providers: [
     {
@@ -110,86 +111,122 @@ export class IncomeDetailsComponent implements OnInit {
     const item = this.income();
     if (!item) return [];
 
-    const currency = 'SGD';
     const amount = Number(item.amount) || 0;
-    
-    const items: MetricCardConfig[] = [
-      {
-        label: 'Monthly Base',
-        value: amount,
-        format: 'currency',
-        icon: 'payments',
-        accentColor: '#6366f1',
-        subtitle: `Regular monthly income`,
-      }
-    ];
-
     const emp = this.employment();
+    const items: MetricCardConfig[] = [];
+
+    // --- 1. Monthly Context (Gross & Net) ---
+    items.push({
+      label: 'Monthly Base',
+      value: amount,
+      format: 'currency',
+      icon: 'payments',
+      accentColor: '#6366f1',
+      subtitle: `Primary monthly gross`,
+    });
+
+    const selectedAcc = this.userService.selectedAccount();
+    const age = this.cpfService.calculateAge(selectedAcc?.date_of_birth);
+
+    // Calculate active months in the current year
+    let activeMonths = 0;
+    for (let m = 1; m <= 12; m++) {
+      if (emp) {
+        if (this.isMonthActive(m, emp.start_dt, emp.end_dt)) activeMonths++;
+      } else {
+        activeMonths = 12;
+        break;
+      }
+    }
+
+    const annualBase = amount * activeMonths;
+
+    if (emp?.has_cpf) {
+      const monthlyCpf = this.cpfService.calculateMonthlyCpf(amount, age);
+      const takeHome = amount - monthlyCpf.employee;
+      items.push({
+        label: 'Net Monthly',
+        value: takeHome,
+        format: 'currency',
+        icon: 'account_balance_wallet',
+        accentColor: '#10b981',
+        subtitle: `Take-home after $${monthlyCpf.employee} CPF`,
+      });
+    }
+
+    // --- 2. Annual Context ---
     if (emp) {
-      const annualBase = amount * 12;
-      const totalBonuses = (emp.bonuses || []).reduce((sum, b) => sum + Number(b.amount), 0);
-      const totalAnnual = annualBase + totalBonuses;
+      const totalBonuses = (emp.bonuses || [])
+        .filter(b => this.isMonthActive(b.month, emp.start_dt, emp.end_dt))
+        .reduce((sum, b) => sum + Number(b.amount), 0);
+
+      const totalAnnualGross = annualBase + totalBonuses;
+
+      if (totalBonuses > 0) {
+        items.push({
+          label: 'Total Bonuses',
+          value: totalBonuses,
+          format: 'currency',
+          icon: 'redeem',
+          accentColor: '#f59e0b',
+          subtitle: `${emp.bonuses?.length || 0} scheduled entries`,
+        });
+      }
+
+      items.push({
+        label: 'Annual Gross',
+        value: totalAnnualGross,
+        format: 'currency',
+        icon: 'analytics',
+        accentColor: '#3b82f6',
+        subtitle: `Total annual gross pay`,
+      });
 
       if (emp.has_cpf) {
-        const selectedAcc = this.userService.selectedAccount();
-        const age = this.cpfService.calculateAge(selectedAcc?.date_of_birth);
-        
-        // Monthly CPF
-        const monthlyCpf = this.cpfService.calculateMonthlyCpf(amount, age);
-        const takeHome = amount - monthlyCpf.employee;
+        const bonusCpf = this.cpfService.calculateBonusCpf(totalBonuses, age, annualBase, 0, activeMonths);
+        const totalEmployeeCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employee * activeMonths) + bonusCpf.employee;
+        const totalEmployerCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employer * activeMonths) + bonusCpf.employer;
+        const netAnnual = totalAnnualGross - totalEmployeeCpfAnnual;
+        const efficiency = (netAnnual / totalAnnualGross) * 100;
 
-        // Annual Bonus CPF
-        const bonusCpf = this.cpfService.calculateBonusCpf(totalBonuses, age, annualBase);
-        
-        const totalEmployeeCpfAnnual = (monthlyCpf.employee * 12) + bonusCpf.employee;
-        const totalEmployerCpfAnnual = (monthlyCpf.employer * 12) + bonusCpf.employer;
-        const netAnnual = totalAnnual - totalEmployeeCpfAnnual;
+        items.push({
+          label: 'Effective Mo. Net',
+          value: activeMonths > 0 ? netAnnual / activeMonths : 0,
+          format: 'currency',
+          icon: 'query_stats',
+          accentColor: '#0d9488',
+          subtitle: 'Average monthly take-home',
+        });
 
+        // --- 3. Efficiency & Savings ---
         items.push(
           {
-            label: 'Net Monthly',
-            value: takeHome,
+            label: 'Total CPF Savings',
+            value: totalEmployeeCpfAnnual + totalEmployerCpfAnnual,
             format: 'currency',
-            icon: 'account_balance_wallet',
-            accentColor: '#ef4444',
-            subtitle: `After $${monthlyCpf.employee} CPF contribution`,
-          },
-          {
-            label: 'Annual Net',
-            value: netAnnual,
-            format: 'currency',
-            icon: 'savings',
-            accentColor: '#10b981',
-            subtitle: 'Net base + net bonuses',
-          },
-          {
-            label: 'Employer CPF',
-            value: totalEmployerCpfAnnual,
-            format: 'currency',
-            icon: 'business',
+            icon: 'account_balance',
             accentColor: '#8b5cf6',
-            subtitle: `Annual employer contribution`,
+            subtitle: `Incl. $${totalEmployerCpfAnnual.toLocaleString()} employer contribution`,
+          },
+          {
+            label: 'Efficiency Ratio',
+            value: efficiency,
+            format: 'percent',
+            icon: 'speed',
+            accentColor: '#ec4899',
+            subtitle: `${efficiency.toFixed(1)}% take-home pay ratio`,
           }
         );
       } else {
-        items.push(
-          {
-            label: 'Annual Total',
-            value: totalAnnual,
-            format: 'currency',
-            icon: 'calendar_today',
-            accentColor: '#10b981',
-            subtitle: 'Including base + bonuses',
-          },
-          {
-            label: 'Total Bonuses',
-            value: totalBonuses,
-            format: 'currency',
-            icon: 'redeem',
-            accentColor: '#f59e0b',
-            subtitle: `${emp.bonuses?.length || 0} bonus entries`,
-          }
-        );
+        const bonusWeight = totalAnnualGross > 0 ? (totalBonuses / totalAnnualGross) * 100 : 0;
+        items.push({
+          label: 'Bonus Weight',
+          value: bonusWeight,
+          format: 'percent',
+          icon: 'pie_chart',
+          accentColor: '#ec4899',
+          subtitle: `${bonusWeight.toFixed(1)}% from variable pay`,
+        });
       }
     }
 
@@ -265,11 +302,22 @@ export class IncomeDetailsComponent implements OnInit {
 
   private buildIncomeForm(): void {
     const item = this.income();
+    const emp = this.employment();
+    
+    const formatDate = (dateStr?: string | null) => {
+      if (!dateStr) return '';
+      return dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    };
+    
     this.incomeForm = this.fb.group({
       name: [item?.name ?? '', Validators.required],
       amount: [item?.amount ?? null, [Validators.required, Validators.min(0)]],
       company: [item?.company ?? ''],
       has_cpf: [item?.has_cpf ?? false],
+      // Employment specific fields
+      start_dt: [formatDate(emp?.start_dt), emp ? Validators.required : []],
+      end_dt: [formatDate(emp?.end_dt)],
+      average_growth_rate: [emp?.average_growth_rate ?? 0, [Validators.min(0), Validators.max(100)]]
     });
   }
 
@@ -412,6 +460,9 @@ export class IncomeDetailsComponent implements OnInit {
     if (item.income_type === 'employment') {
       payload.monthly = Number(raw.amount); // Sync monthly with amount for employment
       payload.company = raw.company;
+      payload.start_dt = raw.start_dt;
+      payload.end_dt = raw.end_dt;
+      payload.average_growth_rate = Number(raw.average_growth_rate);
     }
 
     this.api.updateIncome(item.id, payload).subscribe({
@@ -449,21 +500,86 @@ export class IncomeDetailsComponent implements OnInit {
     });
   }
 
+  private isMonthActive(month: number, startStr: string, endStr?: string | null): boolean {
+    const year = new Date().getFullYear();
+    const start = new Date(startStr);
+    const end = endStr ? new Date(endStr) : null;
+
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+
+    if (monthEnd < start) return false;
+    if (end && monthStart > end) return false;
+
+    return true;
+  }
+
   updateChartOptions(income: Income, isDark: boolean): void {
     const months = this.monthLabels;
     const base = Number(income.amount) || 0;
     const emp = this.employment();
-    
-    // Create an array of 12 values, each base salary
-    const values = Array(12).fill(base);
-    
-    // If employment, add bonuses to specific months
-    if (emp) {
-      emp.bonuses.forEach(b => {
-        if (b.month >= 1 && b.month <= 12) {
-          values[b.month - 1] += Number(b.amount);
-        }
-      });
+    const hasCpf = income.has_cpf;
+
+    // Data arrays for granular breakdown
+    const takeHomeSalaryValues = Array(12).fill(0);
+    const takeHomeBonusValues = Array(12).fill(0);
+    const employeeCpfBaseValues = Array(12).fill(0);
+    const employeeCpfBonusValues = Array(12).fill(0);
+    const employerCpfBaseValues = Array(12).fill(0);
+    const employerCpfBonusValues = Array(12).fill(0);
+
+    const selectedAcc = this.userService.selectedAccount();
+    const age = this.cpfService.calculateAge(selectedAcc?.date_of_birth);
+
+    // Calculate active months to get proper annual base for AW ceiling
+    let activeMonths = 0;
+    for (let i = 1; i <= 12; i++) {
+      if (emp) {
+        if (this.isMonthActive(i, emp.start_dt, emp.end_dt)) activeMonths++;
+      } else {
+        activeMonths = 12;
+        break;
+      }
+    }
+    const annualBase = base * activeMonths;
+
+    let accumulatedAwSubjectToCpf = 0;
+
+    for (let i = 0; i < 12; i++) {
+      const monthNum = i + 1;
+      const isActive = emp ? this.isMonthActive(monthNum, emp.start_dt, emp.end_dt) : true;
+
+      if (!isActive) continue;
+
+      let monthlyBonus = 0;
+      if (emp) {
+        monthlyBonus = emp.bonuses
+          .filter(b => Number(b.month) === monthNum)
+          .reduce((sum, b) => sum + Number(b.amount), 0);
+      }
+
+      if (hasCpf) {
+        const monthlyCpf = this.cpfService.calculateMonthlyCpf(base, age);
+        const bonusCpf = this.cpfService.calculateBonusCpf(monthlyBonus, age, annualBase, accumulatedAwSubjectToCpf, activeMonths);
+
+        // Track cumulative bonus portion that was subject to CPF
+        accumulatedAwSubjectToCpf += bonusCpf.subjectToCpf;
+
+        employeeCpfBaseValues[i] = monthlyCpf.employee;
+        employeeCpfBonusValues[i] = bonusCpf.employee;
+        employerCpfBaseValues[i] = monthlyCpf.employer;
+        employerCpfBonusValues[i] = bonusCpf.employer;
+
+        takeHomeSalaryValues[i] = base - monthlyCpf.employee;
+        takeHomeBonusValues[i] = monthlyBonus - bonusCpf.employee;
+      } else {
+        takeHomeSalaryValues[i] = base;
+        takeHomeBonusValues[i] = monthlyBonus;
+        employeeCpfBaseValues[i] = 0;
+        employeeCpfBonusValues[i] = 0;
+        employerCpfBaseValues[i] = 0;
+        employerCpfBonusValues[i] = 0;
+      }
     }
 
     const textColor = isDark ? '#94a3b8' : '#64748b';
@@ -471,6 +587,14 @@ export class IncomeDetailsComponent implements OnInit {
 
     this.chartOptions.set({
       backgroundColor: 'transparent',
+      legend: {
+        show: true,
+        bottom: 0,
+        textStyle: { color: textColor, fontSize: 10 },
+        icon: 'circle',
+        itemWidth: 8,
+        itemHeight: 8
+      },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -478,14 +602,28 @@ export class IncomeDetailsComponent implements OnInit {
         borderColor: isDark ? '#334155' : '#e2e8f0',
         textStyle: { color: isDark ? '#f8fafc' : '#1e293b' },
         formatter: (params: any) => {
-          const p = params[0];
-          return `<div style="padding: 4px">
-            <div style="font-size: 11px; margin-bottom: 4px; color: ${textColor}">${p.name}</div>
-            <div style="font-weight: 600">SGD ${Number(p.value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          </div>`;
+          let html = `<div style="padding: 4px; min-width: 180px;">
+            <div style="font-size: 11px; margin-bottom: 8px; color: ${textColor}; border-bottom: 1px solid ${splitLineColor}; padding-bottom: 4px;">${params[0].name}</div>`;
+          
+          let totalValue = 0;
+          params.slice().reverse().forEach((p: any) => {
+            if (Math.abs(p.value) > 0.01) {
+              totalValue += p.value;
+              html += `<div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px">
+                <span style="color: ${textColor}">${p.seriesName}</span>
+                <span style="font-weight: 600; margin-left: 12px">SGD ${Number(p.value).toLocaleString('en-SG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+              </div>`;
+            }
+          });
+
+          html += `<div style="display: flex; justify-content: space-between; margin-top: 6px; padding-top: 4px; border-top: 1px solid ${splitLineColor}; font-size: 12px; font-weight: 700">
+            <span>Total Value</span>
+            <span>SGD ${totalValue.toLocaleString('en-SG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+          </div></div>`;
+          return html;
         }
       },
-      grid: { left: '2%', right: '2%', bottom: '3%', top: '10%', containLabel: true },
+      grid: { left: '2%', right: '2%', bottom: '15%', top: '5%', containLabel: true },
       xAxis: {
         type: 'category',
         data: months.map(m => m.substring(0, 3)),
@@ -502,22 +640,54 @@ export class IncomeDetailsComponent implements OnInit {
           formatter: (v: number) => (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v).toString()
         }
       },
-      series: [{
-        data: values,
-        type: 'bar',
-        barWidth: '60%',
-        itemStyle: {
-          borderRadius: [4, 4, 0, 0],
-          color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: '#6366f1' },
-              { offset: 1, color: '#818cf8' }
-            ]
+      series: [
+        {
+          name: 'Take Home (Salary)',
+          data: takeHomeSalaryValues,
+          type: 'bar',
+          stack: 'total',
+          barWidth: '50%',
+          itemStyle: { color: '#6366f1' }
+        },
+        {
+          name: 'Take Home (Bonus)',
+          data: takeHomeBonusValues,
+          type: 'bar',
+          stack: 'total',
+          itemStyle: { color: '#f59e0b' }
+        },
+        {
+          name: 'Employee CPF (Base)',
+          data: employeeCpfBaseValues,
+          type: 'bar',
+          stack: 'total',
+          itemStyle: { color: '#e11d48' }
+        },
+        {
+          name: 'Employee CPF (Bonus)',
+          data: employeeCpfBonusValues,
+          type: 'bar',
+          stack: 'total',
+          itemStyle: { color: '#fb7185' }
+        },
+        {
+          name: 'Employer CPF (Base)',
+          data: employerCpfBaseValues,
+          type: 'bar',
+          stack: 'total',
+          itemStyle: { color: '#7c3aed' }
+        },
+        {
+          name: 'Employer CPF (Bonus)',
+          data: employerCpfBonusValues,
+          type: 'bar',
+          stack: 'total',
+          itemStyle: { 
+            borderRadius: [4, 4, 0, 0],
+            color: '#a78bfa' 
           }
         }
-      }]
+      ]
     });
   }
 
@@ -525,3 +695,4 @@ export class IncomeDetailsComponent implements OnInit {
     this.location.back();
   }
 }
+

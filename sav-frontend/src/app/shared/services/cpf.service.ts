@@ -55,23 +55,33 @@ export class CpfService {
   }
 
   /**
-   * Calculate bonus CPF contributions factoring in AW ceiling
+   * Calculate bonus CPF contributions factoring in AW ceiling and previously accumulated bonuses
    */
-  calculateBonusCpf(bonusAmount: number, age: number, annualSalary: number): { employee: number, employer: number } {
+  calculateBonusCpf(
+    bonusAmount: number,
+    age: number,
+    annualSalary: number,
+    accumulatedAwSubjectToCpf: number = 0,
+    activeMonths: number = 12
+  ): { employee: number, employer: number, subjectToCpf: number } {
     if (!bonusAmount || bonusAmount <= 0) {
-      return { employee: 0, employer: 0 };
+      return { employee: 0, employer: 0, subjectToCpf: 0 };
     }
 
-    // OW subject to CPF capped at ceiling per month
-    const annualOwSubjectToCpf = Math.min(annualSalary, this.OW_CEILING * 12);
-    const awCeiling = Math.max(0, this.AW_ANNUAL_LIMIT - annualOwSubjectToCpf);
-    const subjectToCpf = Math.min(bonusAmount, awCeiling);
+    // OW subject to CPF capped at ceiling per month proportional to active months
+    const annualOwSubjectToCpf = Math.min(annualSalary, this.OW_CEILING * activeMonths);
+    const totalAwCeiling = Math.max(0, this.AW_ANNUAL_LIMIT - annualOwSubjectToCpf);
+    
+    // Remaining ceiling after previous bonuses in the same year
+    const remainingCeiling = Math.max(0, totalAwCeiling - accumulatedAwSubjectToCpf);
+    const subjectToCpf = Math.min(bonusAmount, remainingCeiling);
 
     const { employee: employeeRate, employer: employerRate } = this.getRates(age);
 
     return {
       employee: Math.round(subjectToCpf * employeeRate),
-      employer: Math.round(subjectToCpf * employerRate)
+      employer: Math.round(subjectToCpf * employerRate),
+      subjectToCpf: subjectToCpf
     };
   }
 

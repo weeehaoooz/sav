@@ -86,9 +86,32 @@ export class IncomeComponent implements OnInit {
 
   readonly defaultColDef: ColDef = { sortable: true, resizable: true };
 
-  readonly metrics = computed<MetricCardConfig[]>(() => [
-    { label: 'Income Sources', value: this.incomeService.income().length, format: 'number', icon: 'list', accentColor: '#6366f1' },
-  ]);
+  readonly metrics = computed<MetricCardConfig[]>(() => {
+    const incomes = this.incomeService.income();
+    const totalMonthly = this.incomeService.totalMonthlyIncome();
+    const activeCount = incomes.filter(i => i.is_active).length;
+
+    const metrics: MetricCardConfig[] = [
+      { label: 'Total Monthly', value: totalMonthly, format: 'currency', icon: 'payments', accentColor: '#10b981' },
+      { label: 'Annual Projected', value: totalMonthly * 12, format: 'currency', icon: 'analytics', accentColor: '#3b82f6' },
+      { label: 'Income Sources', value: incomes.length, format: 'number', icon: 'list', accentColor: '#6366f1' },
+      { label: 'Active Streams', value: activeCount, format: 'number', icon: 'check_circle', accentColor: '#f59e0b' },
+    ];
+
+    if (incomes.length > 0) {
+      const topStream = [...incomes].sort((a, b) => b.amount - a.amount)[0];
+      metrics.push({
+        label: 'Top Stream',
+        value: topStream.amount,
+        format: 'currency',
+        icon: 'stars',
+        accentColor: '#8b5cf6',
+        subtitle: topStream.name
+      });
+    }
+
+    return metrics;
+  });
 
   openCreate(): void {
     this.editingItem.set(null);
