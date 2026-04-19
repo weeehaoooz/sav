@@ -8,17 +8,12 @@
     <div class="form-sections">
       <section class="form-section">
         <h5>General Information</h5>
-        <app-employment-general-info 
-          [form]="incomeForm" 
-          [accounts]="user.accounts()" 
-          [incomeTypes]="incomeTypes" />
+        <app-employment-general [form]="incomeForm" [accounts]="user.accounts()" [incomeTypes]="incomeTypes" />
       </section>
 
       <section class="form-section">
         <h5>Financial Details</h5>
-        <app-employment-financials 
-          [form]="incomeForm" 
-          [frequencies]="frequencies" />
+        <app-employment-financials [form]="incomeForm" />
       </section>
     </div>
 

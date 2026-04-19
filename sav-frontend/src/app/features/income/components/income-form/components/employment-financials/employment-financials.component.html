@@ -1,16 +1,50 @@
 <div [formGroup]="form" class="sub-form-group">
   <mat-form-field appearance="fill">
-    <mat-label>Amount (SGD)</mat-label>
-    <input matInput type="number" formControlName="amount" placeholder="0.00" />
+    <mat-label>Monthly Gross Salary (SGD)</mat-label>
+    <input matInput type="number" formControlName="monthly" placeholder="0.00" />
+    <mat-hint>Used to calculate CPF and take-home amount.</mat-hint>
   </mat-form-field>
 
   <mat-form-field appearance="fill">
-    <mat-label>Frequency</mat-label>
-    <mat-select formControlName="frequency">
-      @for (freq of frequencies; track freq.value) {
-        <mat-option [value]="freq.value">{{ freq.label }}</mat-option>
-      }
-    </mat-select>
+    <mat-label>Average Annual Growth Rate (%)</mat-label>
+    <input matInput type="number" formControlName="average_growth_rate" placeholder="3.0" step="0.1" />
+    <mat-hint>Used for future income projections.</mat-hint>
   </mat-form-field>
 
-</div >
+  <div class="bonus-section">
+    <div class="bonus-header">
+      <h6>Potential Bonuses</h6>
+      <button mat-icon-button type="button" (click)="addBonus()" color="primary" title="Add bonus">
+        <mat-icon>add_circle</mat-icon>
+      </button>
+    </div>
+
+    <div formArrayName="bonuses" class="bonus-list">
+      @for (bonus of bonuses.controls; track bonus; let i = $index) {
+        <div [formGroupName]="i" class="bonus-row">
+          <mat-form-field appearance="outline" class="month-select">
+            <mat-label>Month</mat-label>
+            <mat-select formControlName="month">
+              @for (m of months; track m.value) {
+                <mat-option [value]="m.value">{{ m.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="amount-input">
+            <mat-label>Amount</mat-label>
+            <input matInput type="number" formControlName="amount" placeholder="0.00" />
+          </mat-form-field>
+
+          <button mat-icon-button type="button" color="warn" (click)="removeBonus(i)" title="Remove bonus">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+
+      @if (bonuses.length === 0) {
+        <div class="no-bonuses">No bonuses added yet.</div>
+      }
+    </div>
+  </div>
+</div>

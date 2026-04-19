@@ -29,16 +29,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/assets/asset-details/asset-details.component').then(m => m.AssetDetailsComponent),
       },
       {
-        path: 'liabilities',
-        loadComponent: () => import('./features/liabilities/liabilities.component').then(m => m.LiabilitiesComponent),
-      },
-      {
         path: 'income',
         loadComponent: () => import('./features/income/income.component').then(m => m.IncomeComponent),
       },
       {
-        path: 'expenses',
-        loadComponent: () => import('./features/expenses/expenses.component').then(m => m.ExpensesComponent),
+        path: 'income/:id',
+        loadComponent: () => import('./features/income/income-details/income-details.component').then(m => m.IncomeDetailsComponent),
       },
       {
         path: 'simulations',

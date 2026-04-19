@@ -14,6 +14,8 @@ export class UserService {
   private _accounts = signal<Account[]>([]);
   readonly accounts = this._accounts.asReadonly();
   readonly selectedAccount = signal<Account | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
   readonly accountOptions = computed(() =>
     this._accounts().map(a => ({
@@ -36,12 +38,20 @@ export class UserService {
   }
 
   loadAccounts(): void {
-    this.api.getAccounts().subscribe(data => {
-      this._accounts.set(data);
-      // Auto-select primary account or first one
-      if (!this.selectedAccount() && data.length > 0) {
-        const primary = data.find(a => a.account_type === 'primary');
-        this.selectedAccount.set(primary || data[0]);
+    this.loading.set(true);
+    this.api.getAccounts().subscribe({
+      next: (data) => {
+        this._accounts.set(data);
+        // Auto-select primary account or first one
+        if (!this.selectedAccount() && data.length > 0) {
+          const primary = data.find(a => a.account_type === 'primary');
+          this.selectedAccount.set(primary || data[0]);
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Failed to load accounts');
+        this.loading.set(false);
       }
     });
   }

@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { TopbarComponent } from './topbar/topbar.component';
-import { StateService } from '../../shared/services/state.service';
+import { AuthService } from '../../shared/services/auth.service';
 
 @Component({
   selector: 'app-layout',
@@ -12,9 +12,8 @@ import { StateService } from '../../shared/services/state.service';
   styleUrls: ['./layout.component.scss'],
 })
 export class LayoutComponent implements OnInit {
-  private readonly state = inject(StateService);
+  private readonly auth = inject(AuthService);
 
   ngOnInit(): void {
-    this.state.loadAll();
   }
 }

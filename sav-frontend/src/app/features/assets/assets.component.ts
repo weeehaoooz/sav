@@ -27,7 +27,7 @@ import { Asset, AssetType } from '../../shared/models/asset.model';
 import { ApiService } from '../../shared/services/api.service';
 import { AssetService } from '../../shared/services/asset.service';
 import { NetworthService } from '../../shared/services/networth.service';
-import { StateService } from '../../shared/services/state.service';
+import { DashboardService } from '../../shared/services/dashboard.service';
 import { ThemeService } from '../../shared/services/theme.service';
 import { UserService } from '../../shared/services/user.service';
 import { AssetFormComponent } from './components/asset-form/asset-form.component';
@@ -46,7 +46,7 @@ import { AssetFormComponent } from './components/asset-form/asset-form.component
   styleUrls: ['./assets.component.scss'],
 })
 export class AssetsComponent implements OnInit {
-  readonly state = inject(StateService);
+  readonly dashboardService = inject(DashboardService);
   readonly assetService = inject(AssetService);
   readonly netWorthService = inject(NetworthService);
   private readonly api = inject(ApiService);
@@ -64,7 +64,7 @@ export class AssetsComponent implements OnInit {
   readonly importing = signal(false);
 
   readonly displayAssets = computed(() => {
-    const assets = this.state.assets();
+    const assets = this.assetService.assets();
     if (!this.isQuickEdit()) return assets;
 
     const expanded: any[] = [];
@@ -236,7 +236,7 @@ export class AssetsComponent implements OnInit {
   };
 
   readonly metrics = computed<MetricCardConfig[]>(() => {
-    const d = this.state.dashboard();
+    const d = this.dashboardService.dashboard();
     return [
       {
         label: 'Net Worth',
@@ -248,7 +248,7 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'YTD Networth Gain/Loss',
-        value: this.state.assets().reduce((s, a) => s + (a.ytd_networth_gain || 0), 0),
+        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_networth_gain || 0), 0),
         format: 'currency',
         icon: 'trending_up',
         accentColor: '#818cf8',
@@ -264,7 +264,7 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'Total YTD Gain/Loss',
-        value: this.state.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
+        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
         format: 'currency',
         icon: 'show_chart',
         accentColor: '#10b981',
@@ -274,6 +274,7 @@ export class AssetsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.assetService.loadAssets();
   }
 
   onGridReady(params: GridReadyEvent): void {

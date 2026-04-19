@@ -13,7 +13,7 @@
     <mat-label>Account</mat-label>
     <mat-select formControlName="account">
       @for (acc of accounts; track acc.id) {
-        <mat-option [value]="acc.id">{{ acc.display_name }}</mat-option>
+      <mat-option [value]="acc.id">{{ acc.display_name }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
@@ -22,10 +22,26 @@
     <mat-label>Type</mat-label>
     <mat-select formControlName="income_type">
       @for (type of incomeTypes; track type.value) {
-        <mat-option [value]="type.value">{{ type.label }}</mat-option>
+      <mat-option [value]="type.value">{{ type.label }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
+
+  <div class="column-fields">
+    <mat-form-field appearance="fill">
+      <mat-label>Start Date</mat-label>
+      <input matInput [matDatepicker]="startPicker" formControlName="start_dt">
+      <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+      <mat-datepicker #startPicker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>End Date (Optional)</mat-label>
+      <input matInput [matDatepicker]="endPicker" formControlName="end_dt">
+      <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+      <mat-datepicker #endPicker></mat-datepicker>
+    </mat-form-field>
+  </div>
 
   <div class="toggle-row">
     <mat-slide-toggle formControlName="has_cpf">Necessary CPF Contributions?</mat-slide-toggle>

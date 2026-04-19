@@ -6,12 +6,9 @@
     <!-- Profiles Grid -->
     <div class="profiles-grid">
       @for (acc of userService.accounts(); track acc.id) {
-        <app-account-card 
-          [account]="acc" 
-          (edit)="openEdit($event)" 
-          (delete)="deleteAccount($event)" />
+      <app-account-card [account]="acc" (edit)="openEdit($event)" (delete)="deleteAccount($event)" />
       } @empty {
-      @if (!state.loading()) {
+      @if (!userService.loading()) {
       <div class="empty-state glass">No accounts found.</div>
       }
       }
@@ -20,11 +17,7 @@
     <!-- Form Panel -->
     @if (showForm()) {
     <div class="form-panel glass fade-in">
-      <app-member-form 
-        [account]="editingAccount()" 
-        [saving]="saving()" 
-        (save)="save($event)" 
-        (cancel)="cancelForm()" />
+      <app-member-form [account]="editingAccount()" [saving]="saving()" (save)="save($event)" (cancel)="cancelForm()" />
     </div>
     }
   </div>

@@ -1,7 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Asset } from '../models/asset.model';
-import { LiabilityService } from './liability.service';
 
 @Injectable({ providedIn: 'root' })
 export class AssetService {

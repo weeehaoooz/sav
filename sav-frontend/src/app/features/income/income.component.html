@@ -1,18 +1,16 @@
 <div class="page-content fade-in">
-  <app-page-header title="Income" subtitle="All your income streams" actionLabel="Add Income" actionIcon="add" (actionClicked)="openCreate()" />
+  <app-page-header title="Income" subtitle="All your income streams" actionLabel="Add Income" actionIcon="add"
+    (actionClicked)="openCreate()" />
   <div class="metrics-grid" style="margin-bottom:24px;">
     @for (m of metrics(); track m.label) { <app-metric-card [config]="m" /> }
   </div>
   <div class="content-split" [class.form-open]="showForm()">
     <div class="table-wrapper glass">
-      <ag-grid-angular [theme]="gridTheme" [rowData]="state.income()" [columnDefs]="colDefs" [defaultColDef]="defaultColDef" [animateRows]="true" style="height:480px;width:100%;" />
+      <ag-grid-angular [theme]="gridTheme" [rowData]="incomeService.income()" [columnDefs]="colDefs"
+        [defaultColDef]="defaultColDef" [animateRows]="true" style="height:480px;width:100%;" />
     </div>
     @if (showForm()) {
-      <app-income-form 
-        [item]="editingItem()" 
-        [saving]="saving()" 
-        (save)="onSave($event)" 
-        (cancel)="cancelForm()" />
+    <app-income-form [item]="editingItem()" [saving]="saving()" (save)="onSave($event)" (cancel)="cancelForm()" />
     }
   </div>
 </div>

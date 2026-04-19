@@ -1,13 +1,13 @@
 import { Component, inject, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { StateService } from '../../shared/services/state.service';
-import { LiabilityService } from '../../shared/services/liability.service';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { AssetService } from '../../shared/services/asset.service';
 import type { EChartsOption } from 'echarts';
 import { NetworthService } from '../../shared/services/networth.service';
+import { DashboardService } from '../../shared/services/dashboard.service';
+import { IncomeService } from '../../shared/services/income.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,15 +16,33 @@ import { NetworthService } from '../../shared/services/networth.service';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {
-  readonly state = inject(StateService);
+export class DashboardComponent implements OnInit {
+  readonly dashboardService = inject(DashboardService);
+  readonly incomeService = inject(IncomeService);
   readonly netWorthService = inject(NetworthService);
   readonly assetService = inject(AssetService);
-  readonly liabilityService = inject(LiabilityService);
+
+  ngOnInit(): void {
+    this.dashboardService.loadDashboardSummary();
+    this.assetService.loadAssets();
+    this.incomeService.loadIncome();
+  }
+
+  readonly loading = computed(() =>
+    this.assetService.loading() ||
+    this.incomeService.loading() ||
+    this.dashboardService.loading()
+  );
+
+  readonly error = computed(() =>
+    this.assetService.error() ||
+    this.incomeService.error() ||
+    this.dashboardService.error()
+  );
 
   // ── Metric Cards ─────────────────────────────────────────────────────────
   readonly metrics = computed<MetricCardConfig[]>(() => {
-    const d = this.state.dashboard();
+    const d = this.dashboardService.dashboard();
     return [
       {
         label: 'Net Worth',
@@ -36,7 +54,7 @@ export class DashboardComponent {
       },
       {
         label: 'Monthly Cash Flow',
-        value: d?.cash_flow?.monthly_cash_flow ?? this.state.monthlyCashFlow(),
+        value: d?.cash_flow?.monthly_cash_flow ?? 0.00,
         format: 'currency',
         icon: 'swap_vert',
         accentColor: '#06b6d4',
@@ -103,9 +121,8 @@ export class DashboardComponent {
 
   // ── Income vs Expenses Bar ────────────────────────────────────────────────
   readonly cashFlowChart = computed<EChartsOption>(() => {
-    const d = this.state.dashboard();
-    const monthlyIncome = d?.cash_flow.monthly_income ?? this.state.totalMonthlyIncome();
-    const monthlyExpenses = d?.cash_flow.monthly_expenses ?? this.state.totalMonthlyExpenses();
+    const d = this.dashboardService.dashboard();
+    const monthlyIncome = d?.cash_flow.monthly_income ?? this.incomeService.totalMonthlyIncome();
 
     return {
       backgroundColor: 'transparent',
@@ -136,14 +153,6 @@ export class DashboardComponent {
         type: 'bar',
         data: [
           { value: monthlyIncome, itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] } },
-          { value: monthlyExpenses, itemStyle: { color: '#f43f5e', borderRadius: [4, 4, 0, 0] } },
-          {
-            value: monthlyIncome - monthlyExpenses,
-            itemStyle: {
-              color: monthlyIncome >= monthlyExpenses ? '#6366f1' : '#f59e0b',
-              borderRadius: [4, 4, 0, 0],
-            },
-          },
         ],
         barWidth: '40%',
       }],

@@ -1,0 +1,224 @@
+<div class="page-content full-width fade-in">
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Crunching Income Data...</p>
+  </div>
+  } @else if (income() !== null) {
+
+  <header class="details-header">
+    <div class="header-main">
+      <button class="icon-btn back-btn" (click)="goBack()" matTooltip="Return to Income List">
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <div class="title-group">
+        <h1 class="asset-title">{{ income()?.name }}</h1>
+        <div class="badge-row">
+          <span class="badge type-badge">{{ income()?.income_type }}</span>
+          @if (income()?.company) {
+          <span class="badge cur-badge">{{ income()?.company }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="icon-btn edit-details-btn" (click)="toggleEditIncomeForm()" [class.active]="showEditIncomeForm()"
+        matTooltip="Edit Income Details">
+        <span class="material-icons">{{ showEditIncomeForm() ? 'close' : 'edit' }}</span>
+        <span>{{ showEditIncomeForm() ? 'Cancel' : 'Edit Details' }}</span>
+      </button>
+
+      @if (employment()) {
+      <button class="action-btn add-btn" (click)="toggleAddForm()" [class.active]="showAddForm()"
+        matTooltip="Add Bonus Entry">
+        <span class="material-icons">{{ showAddForm() ? 'close' : 'add_circle' }}</span>
+        <span>{{ showAddForm() ? 'Cancel' : 'Add Bonus' }}</span>
+      </button>
+      }
+    </div>
+  </header>
+
+  <section class="performance-summary">
+    @for (m of metrics(); track m.label) {
+    <div class="metric-block glass-hover">
+      <div class="metric-top">
+        <span class="m-label">{{ m.label }}</span>
+        <span class="material-icons m-icon" [style.color]="m.accentColor">{{ m.icon }}</span>
+      </div>
+      <div class="m-value number-mono">
+        @if (m.format === 'currency') {
+        {{ m.value | currency:'SGD':'symbol':'1.2-2' }}
+        } @else {
+        {{ m.value }}
+        }
+      </div>
+      <div class="m-subtitle">{{ m.subtitle }}</div>
+      <div class="accent-bar" [style.background]="m.accentColor"></div>
+    </div>
+    }
+  </section>
+
+  <!-- ── Add / Edit Bonus Form ────────────────────────────────────────── -->
+  @if (showAddForm()) {
+  <section class="add-entry-form glass" [@slideDown]>
+    <div class="form-header">
+      <div class="form-title-group">
+        <span class="material-icons form-icon">{{ editingBonus() ? 'edit_note' : 'post_add' }}</span>
+        <div>
+          <div class="form-title">{{ editingBonus() ? 'Update Bonus' : 'Record New Bonus' }}</div>
+          <div class="form-subtitle">{{ editingBonus() ? 'Modify this bonus entry.' : 'Add a scheduled bonus for this
+            employment.' }}
+          </div>
+        </div>
+      </div>
+      <button class="icon-btn close-form-btn" (click)="cancelForm()" title="Cancel">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <form [formGroup]="entryForm" (ngSubmit)="saveBonus()" class="entry-form-grid">
+
+      <!-- Month -->
+      <div class="form-field" [class.error]="entryForm.get('month')?.invalid && entryForm.get('month')?.touched">
+        <label class="field-label">Target Month <span class="required">*</span></label>
+        <select formControlName="month" class="field-input">
+          @for (month of monthLabels; track month; let i = $index) {
+          <option [value]="i + 1">{{ month }}</option>
+          }
+        </select>
+        @if (entryForm.get('month')?.hasError('required') && entryForm.get('month')?.touched) {
+        <span class="field-error">Month is required</span>
+        }
+      </div>
+
+      <!-- Amount -->
+      <div class="form-field" [class.error]="entryForm.get('amount')?.invalid && entryForm.get('amount')?.touched">
+        <label class="field-label">Bonus Amount (SGD) <span class="required">*</span></label>
+        <div class="field-with-prefix">
+          <span class="field-prefix">SGD</span>
+          <input type="number" formControlName="amount" placeholder="0.00" step="0.01" min="0"
+            class="field-input prefixed" />
+        </div>
+        @if (entryForm.get('amount')?.hasError('required') && entryForm.get('amount')?.touched) {
+        <span class="field-error">Amount is required</span>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancelForm()" [disabled]="saving()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          @if (saving()) {
+          <div class="btn-spinner"></div>
+          <span>Saving...</span>
+          } @else {
+          <span class="material-icons" style="font-size: 18px">{{ editingBonus() ? 'save' : 'add_circle' }}</span>
+          <span>{{ editingBonus() ? 'Update Bonus' : 'Add Bonus' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+  }
+
+  <!-- ── Edit Income Base Form ────────────────────────────────────────── -->
+  @if (showEditIncomeForm()) {
+  <section class="add-entry-form edit-income-form glass" [@slideDown]>
+    <div class="form-header">
+      <div class="form-title-group">
+        <span class="material-icons form-icon" style="color: var(--accent-indigo)">edit</span>
+        <div>
+          <div class="form-title">Edit Income Base Details</div>
+          <div class="form-subtitle">Update core information and monthly income amount.</div>
+        </div>
+      </div>
+      <button class="icon-btn close-form-btn" (click)="cancelEditIncome()" title="Cancel">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <form [formGroup]="incomeForm" (ngSubmit)="saveIncomeDetails()" class="entry-form-grid">
+
+      <!-- Name -->
+      <div class="form-field" [class.error]="incomeForm.get('name')?.invalid && incomeForm.get('name')?.touched">
+        <label class="field-label">Income Name <span class="required">*</span></label>
+        <input type="text" formControlName="name" placeholder="e.g. Primary Salary" class="field-input" />
+        @if (incomeForm.get('name')?.hasError('required') && incomeForm.get('name')?.touched) {
+        <span class="field-error">Name is required</span>
+        }
+      </div>
+
+      <!-- Amount / Monthly -->
+      <div class="form-field" [class.error]="incomeForm.get('amount')?.invalid && incomeForm.get('amount')?.touched">
+        <label class="field-label">Monthly Income <span class="required">*</span></label>
+        <div class="field-with-prefix">
+          <span class="field-prefix">SGD</span>
+          <input type="number" formControlName="amount" placeholder="0.00" step="0.01" min="0"
+            class="field-input prefixed" />
+        </div>
+        @if (incomeForm.get('amount')?.hasError('required') && incomeForm.get('amount')?.touched) {
+        <span class="field-error">Monthly income is required</span>
+        }
+      </div>
+
+      <!-- CPF Toggle -->
+      <div class="form-field checkbox-field">
+        <label class="checkbox-container">
+          <input type="checkbox" formControlName="has_cpf" />
+          <span class="checkbox-label">CPF Contributions</span>
+          <span class="checkmark"></span>
+        </label>
+        <div class="field-subtitle">Calculates employee & employer CPF</div>
+      </div>
+
+      <!-- Company (conditional) -->
+      @if (employment()) {
+      <div class="form-field">
+        <label class="field-label">Company / Employer</label>
+        <input type="text" formControlName="company" placeholder="e.g. Acme Corp" class="field-input" />
+      </div>
+      }
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancelEditIncome()" [disabled]="savingIncome()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="savingIncome()" style="background: linear-gradient(135deg, var(--accent-indigo), color-mix(in srgb, var(--accent-indigo), var(--accent-emerald) 40%)); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);">
+          @if (savingIncome()) {
+          <div class="btn-spinner"></div>
+          <span>Saving...</span>
+          } @else {
+          <span class="material-icons" style="font-size: 18px">save</span>
+          <span>Save Changes</span>
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+  }
+
+  <div class="main-layout" [class.centered]="!employment()">
+    <div class="primary-view">
+      <div class="card-title">Annual Income Projection</div>
+      <div class="chart-box glass">
+        <div echarts [options]="chartOptions()" [autoResize]="true" class="echarts-el"></div>
+      </div>
+    </div>
+
+    @if (employment()) {
+    <div class="secondary-view">
+      <div class="section-header">
+        <div class="card-title">Scheduled Bonuses</div>
+        <span class="entry-count">{{ bonuses().length }} entries</span>
+      </div>
+      <div class="grid-box glass">
+        <ag-grid-angular [theme]="gridTheme" [rowData]="bonuses()" [columnDefs]="colDefs()"
+          [defaultColDef]="{ sortable: true, resizable: true }" [animateRows]="true" [rowHeight]="52"
+          (gridReady)="onGridReady($event)"
+          style="height: 400px; width: 100%;" />
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

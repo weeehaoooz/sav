@@ -26,9 +26,7 @@ export class SidebarComponent {
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
     { label: 'Assets', icon: 'account_balance', path: '/assets', hasDivider: true },
-    { label: 'Liabilities', icon: 'credit_card', path: '/liabilities' },
     { label: 'Income', icon: 'trending_up', path: '/income', hasDivider: true },
-    { label: 'Expenses', icon: 'receipt_long', path: '/expenses' },
     { label: 'Simulations', icon: 'timeline', path: '/simulations', hasDivider: true },
     { label: 'Family', icon: 'people', path: '/family', hasDivider: true }
   ];

@@ -8,7 +8,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { StateService } from '../../shared/services/state.service';
 import { ApiService } from '../../shared/services/api.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
@@ -28,7 +27,6 @@ import type { EChartsOption } from 'echarts';
   styleUrls: ['./simulations.component.scss'],
 })
 export class SimulationsComponent {
-  readonly state = inject(StateService);
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
 

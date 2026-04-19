@@ -8,7 +8,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { StateService } from '../../shared/services/state.service';
 import { ApiService } from '../../shared/services/api.service';
 import { UserService } from '../../shared/services/user.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -29,7 +28,6 @@ import { MemberFormComponent } from './components/member-form/member-form.compon
   styleUrls: ['./family.component.scss'],
 })
 export class FamilyComponent {
-  readonly state = inject(StateService);
   readonly userService = inject(UserService);
   private readonly api = inject(ApiService);
   private readonly snackbar = inject(MatSnackBar);
@@ -60,7 +58,7 @@ export class FamilyComponent {
 
     const account = this.editingAccount();
     const obs = account ? this.api.updateAccount(account.id, data) : this.api.createAccount(data);
-    
+
     obs.subscribe({
       next: () => {
         this.userService.refreshAccounts();

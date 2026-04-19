@@ -89,7 +89,7 @@ export class ApiService {
   }
 
   // ── Income ────────────────────────────────────────────────────────────────
-  getIncome(): Observable<Income[]> {
+  getIncomes(): Observable<Income[]> {
     return this.http.get<Income[]>(`${this.base}/income/`);
   }
   createIncome(data: Partial<Income>): Observable<Income> {
@@ -97,6 +97,9 @@ export class ApiService {
   }
   updateIncome(id: number, data: Partial<Income>): Observable<Income> {
     return this.http.patch<Income>(`${this.base}/income/${id}/`, data);
+  }
+  getIncome(id: number): Observable<Income> {
+    return this.http.get<Income>(`${this.base}/income/${id}/`);
   }
   deleteIncome(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/income/${id}/`);

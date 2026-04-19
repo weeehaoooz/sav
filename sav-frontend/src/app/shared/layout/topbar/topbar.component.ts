@@ -1,5 +1,4 @@
 import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
-import { StateService } from '../../services/state.service';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { CurrencyPipe, UpperCasePipe, CommonModule, TitleCasePipe } from '@angular/common';
@@ -21,7 +20,6 @@ import { NetworthService } from '../../services/networth.service';
   styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent {
-  readonly state = inject(StateService);
   readonly auth = inject(AuthService);
   readonly userService = inject(UserService);
   private readonly eRef = inject(ElementRef);
