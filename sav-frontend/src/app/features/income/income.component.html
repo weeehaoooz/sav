@@ -6,7 +6,7 @@
   </div>
   <div class="content-split" [class.form-open]="showForm()">
     <div class="table-wrapper glass">
-      <ag-grid-angular [theme]="gridTheme" [rowData]="incomeService.income()" [columnDefs]="colDefs"
+      <ag-grid-angular [theme]="gridTheme" [rowData]="filteredIncomes()" [columnDefs]="colDefs"
         [defaultColDef]="defaultColDef" [animateRows]="true" style="height:480px;width:100%;" />
     </div>
     @if (showForm()) {

@@ -69,6 +69,12 @@ export class IncomeFormComponent implements OnInit {
         ...this.item,
         account: this.item.account as any
       });
+    } else {
+      // Default to currently selected account
+      const selected = this.user.selectedAccount();
+      if (selected) {
+        this.incomeForm.patchValue({ account: selected.id });
+      }
     }
 
     this.incomeForm.get('monthly')?.valueChanges.subscribe(val => {

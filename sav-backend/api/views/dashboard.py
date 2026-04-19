@@ -7,12 +7,21 @@ from api.services.simulations import project_retirement
 class DashboardSummaryView(APIView):
     def get(self, request):
         user_id = request.query_params.get('user_id')
-        if user_id:
-            accounts = Account.objects.filter(user_id=user_id).prefetch_related(
+        account_id = request.query_params.get('account_id')
+        
+        # Base queryset filtered by the authenticated user for security
+        queryset = Account.objects.filter(user=request.user)
+        
+        if account_id:
+            accounts = queryset.filter(id=account_id).prefetch_related(
+                'asset_ownerships__asset', 'liabilities', 'incomes', 'expenses'
+            )
+        elif user_id:
+            accounts = queryset.filter(user_id=user_id).prefetch_related(
                 'asset_ownerships__asset', 'liabilities', 'incomes', 'expenses'
             )
         else:
-            accounts = Account.objects.all().prefetch_related(
+            accounts = queryset.prefetch_related(
                 'asset_ownerships__asset', 'liabilities', 'incomes', 'expenses'
             )
 

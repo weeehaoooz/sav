@@ -63,8 +63,15 @@ export class AssetsComponent implements OnInit {
   readonly saving = signal(false);
   readonly importing = signal(false);
 
+  readonly filteredAssets = computed(() => {
+    const all = this.assetService.assets();
+    const acc = this.userService.selectedAccount();
+    if (!acc) return all;
+    return all.filter(a => a.ownerships.some(o => o.account === acc.id));
+  });
+
   readonly displayAssets = computed(() => {
-    const assets = this.assetService.assets();
+    const assets = this.filteredAssets();
     if (!this.isQuickEdit()) return assets;
 
     const expanded: any[] = [];
@@ -236,7 +243,24 @@ export class AssetsComponent implements OnInit {
   };
 
   readonly metrics = computed<MetricCardConfig[]>(() => {
-    const d = this.dashboardService.dashboard();
+    const assets = this.filteredAssets();
+    const acc = this.userService.selectedAccount();
+    
+    const totalAssetsMapped = assets.reduce((s, a) => {
+      const ownership = a.ownerships.find(o => o.account === acc?.id)?.ownership_percentage ?? 100;
+      return s + (Number(a.current_value) * (ownership / 100));
+    }, 0);
+
+    const totalYtdGain = assets.reduce((s, a) => {
+        const ownership = a.ownerships.find(o => o.account === acc?.id)?.ownership_percentage ?? 100;
+        return s + ((a.ytd_gain_loss || 0) * (ownership / 100));
+    }, 0);
+
+    const totalYtdNetworthGain = assets.reduce((s, a) => {
+        const ownership = a.ownerships.find(o => o.account === acc?.id)?.ownership_percentage ?? 100;
+        return s + ((a.ytd_networth_gain || 0) * (ownership / 100));
+    }, 0);
+
     return [
       {
         label: 'Net Worth',
@@ -248,7 +272,7 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'YTD Networth Gain/Loss',
-        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_networth_gain || 0), 0),
+        value: totalYtdNetworthGain,
         format: 'currency',
         icon: 'trending_up',
         accentColor: '#818cf8',
@@ -256,7 +280,7 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'Total Assets',
-        value: this.assetService.totalAssetValue(),
+        value: totalAssetsMapped,
         format: 'currency',
         icon: 'savings',
         accentColor: '#06b6d4',
@@ -264,7 +288,7 @@ export class AssetsComponent implements OnInit {
       },
       {
         label: 'Total YTD Gain/Loss',
-        value: this.assetService.assets().reduce((s, a) => s + (a.ytd_gain_loss || 0), 0),
+        value: totalYtdGain,
         format: 'currency',
         icon: 'show_chart',
         accentColor: '#10b981',
@@ -365,6 +389,17 @@ export class AssetsComponent implements OnInit {
 
     const editingAsset = this.selectedAssetForEdit();
     const id = editingAsset?.id;
+    const selectedAcc = this.userService.selectedAccount();
+
+    // Default ownership for new assets
+    if (!id && selectedAcc) {
+      data.ownerships = [
+          {
+              account: selectedAcc.id,
+              ownership_percentage: 100
+          }
+      ];
+    }
 
     const obs = id ? this.api.updateAsset(id, data) : this.api.createAsset(data);
     obs.subscribe({

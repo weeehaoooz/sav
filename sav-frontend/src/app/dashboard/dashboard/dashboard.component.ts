@@ -1,4 +1,4 @@
-import { Component, inject, computed, OnInit } from '@angular/core';
+import { Component, inject, computed, OnInit, effect, untracked } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
@@ -8,6 +8,7 @@ import type { EChartsOption } from 'echarts';
 import { NetworthService } from '../../shared/services/networth.service';
 import { DashboardService } from '../../shared/services/dashboard.service';
 import { IncomeService } from '../../shared/services/income.service';
+import { UserService } from '../../shared/services/user.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,9 +22,18 @@ export class DashboardComponent implements OnInit {
   readonly incomeService = inject(IncomeService);
   readonly netWorthService = inject(NetworthService);
   readonly assetService = inject(AssetService);
+  protected readonly userService = inject(UserService);
+  
+  constructor() {
+    effect(() => {
+      const acc = this.userService.selectedAccount();
+      const id = acc?.id;
+      untracked(() => this.dashboardService.loadDashboardSummary(id));
+    });
+  }
 
   ngOnInit(): void {
-    this.dashboardService.loadDashboardSummary();
+    // Initial load happens via the effect of selectedAccount
     this.assetService.loadAssets();
     this.incomeService.loadIncome();
   }
@@ -39,6 +49,20 @@ export class DashboardComponent implements OnInit {
     this.incomeService.error() ||
     this.dashboardService.error()
   );
+
+  private readonly filteredAssets = computed(() => {
+    const all = this.assetService.assets();
+    const acc = this.userService.selectedAccount();
+    if (!acc) return all;
+    return all.filter(a => a.ownerships.some(o => o.account === acc.id));
+  });
+
+  private readonly filteredIncomes = computed(() => {
+    const all = this.incomeService.income();
+    const acc = this.userService.selectedAccount();
+    if (!acc) return all;
+    return all.filter(i => i.account === acc.id);
+  });
 
   // ── Metric Cards ─────────────────────────────────────────────────────────
   readonly metrics = computed<MetricCardConfig[]>(() => {
@@ -81,10 +105,20 @@ export class DashboardComponent implements OnInit {
 
   // ── Asset Allocation Donut ────────────────────────────────────────────────
   readonly assetAllocationChart = computed<EChartsOption>(() => {
-    const byType = this.assetService.assetsByType();
-    const data = Object.entries(byType).map(([type, assets]) => ({
+    const assets = this.filteredAssets();
+    const acc = this.userService.selectedAccount();
+    
+    // Group by type and calculate pro-rated value
+    const byType: Record<string, number> = {};
+    for (const a of assets) {
+      const ownership = a.ownerships.find(o => o.account === acc?.id)?.ownership_percentage ?? 100;
+      const ownedValue = Number(a.current_value) * (ownership / 100);
+      byType[a.asset_type] = (byType[a.asset_type] || 0) + ownedValue;
+    }
+
+    const data = Object.entries(byType).map(([type, value]) => ({
       name: this.formatAssetType(type),
-      value: assets.reduce((s, a) => s + (Number(a.current_value) || 0), 0),
+      value: value,
     }));
 
     return {
@@ -122,7 +156,7 @@ export class DashboardComponent implements OnInit {
   // ── Income vs Expenses Bar ────────────────────────────────────────────────
   readonly cashFlowChart = computed<EChartsOption>(() => {
     const d = this.dashboardService.dashboard();
-    const monthlyIncome = d?.cash_flow.monthly_income ?? this.incomeService.totalMonthlyIncome();
+    const monthlyIncome = d?.cash_flow.monthly_income ?? this.filteredIncomes().reduce((s, i) => s + (Number(i.amount) || 0), 0);
 
     return {
       backgroundColor: 'transparent',

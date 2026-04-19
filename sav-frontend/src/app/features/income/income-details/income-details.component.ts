@@ -125,8 +125,9 @@ export class IncomeDetailsComponent implements OnInit {
       subtitle: `Primary monthly gross`,
     });
 
-    const selectedAcc = this.userService.selectedAccount();
-    const age = this.cpfService.calculateAge(selectedAcc?.date_of_birth);
+    const incomeAccId = item.account;
+    const account = this.userService.accounts().find(a => a.id === Number(incomeAccId));
+    const age = this.cpfService.calculateAge(account?.date_of_birth);
 
     // Calculate active months in the current year
     let activeMonths = 0;
@@ -145,7 +146,7 @@ export class IncomeDetailsComponent implements OnInit {
       const monthlyCpf = this.cpfService.calculateMonthlyCpf(amount, age);
       const takeHome = amount - monthlyCpf.employee;
       items.push({
-        label: 'Net Monthly',
+        label: 'Take-home Monthly',
         value: takeHome,
         format: 'currency',
         icon: 'account_balance_wallet',
@@ -187,10 +188,9 @@ export class IncomeDetailsComponent implements OnInit {
         const totalEmployeeCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employee * activeMonths) + bonusCpf.employee;
         const totalEmployerCpfAnnual = (this.cpfService.calculateMonthlyCpf(amount, age).employer * activeMonths) + bonusCpf.employer;
         const netAnnual = totalAnnualGross - totalEmployeeCpfAnnual;
-        const efficiency = (netAnnual / totalAnnualGross) * 100;
 
         items.push({
-          label: 'Effective Mo. Net',
+          label: 'Effective Mo. Take-home',
           value: activeMonths > 0 ? netAnnual / activeMonths : 0,
           format: 'currency',
           icon: 'query_stats',
@@ -198,25 +198,14 @@ export class IncomeDetailsComponent implements OnInit {
           subtitle: 'Average monthly take-home',
         });
 
-        // --- 3. Efficiency & Savings ---
-        items.push(
-          {
-            label: 'Total CPF Savings',
-            value: totalEmployeeCpfAnnual + totalEmployerCpfAnnual,
-            format: 'currency',
-            icon: 'account_balance',
-            accentColor: '#8b5cf6',
-            subtitle: `Incl. $${totalEmployerCpfAnnual.toLocaleString()} employer contribution`,
-          },
-          {
-            label: 'Efficiency Ratio',
-            value: efficiency,
-            format: 'percent',
-            icon: 'speed',
-            accentColor: '#ec4899',
-            subtitle: `${efficiency.toFixed(1)}% take-home pay ratio`,
-          }
-        );
+        items.push({
+          label: 'Total CPF Savings',
+          value: totalEmployeeCpfAnnual + totalEmployerCpfAnnual,
+          format: 'currency',
+          icon: 'account_balance',
+          accentColor: '#8b5cf6',
+          subtitle: `Incl. $${totalEmployerCpfAnnual.toLocaleString()} employer contribution`,
+        });
       } else {
         const bonusWeight = totalAnnualGross > 0 ? (totalBonuses / totalAnnualGross) * 100 : 0;
         items.push({
@@ -528,8 +517,9 @@ export class IncomeDetailsComponent implements OnInit {
     const employerCpfBaseValues = Array(12).fill(0);
     const employerCpfBonusValues = Array(12).fill(0);
 
-    const selectedAcc = this.userService.selectedAccount();
-    const age = this.cpfService.calculateAge(selectedAcc?.date_of_birth);
+    const incomeAccId = income.account;
+    const account = this.userService.accounts().find(a => a.id === Number(incomeAccId));
+    const age = this.cpfService.calculateAge(account?.date_of_birth);
 
     // Calculate active months to get proper annual base for AW ceiling
     let activeMonths = 0;

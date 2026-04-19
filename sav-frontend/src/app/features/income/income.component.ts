@@ -12,6 +12,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 import { MetricCardComponent, MetricCardConfig } from '../../shared/components/metric-card/metric-card.component';
 import { savGridTheme } from '../../shared/ag-grid-theme';
 import { Income } from '../../shared/models/income.model';
+import { UserService } from '../../shared/services/user.service';
 import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
 import { IncomeFormComponent } from './components/income-form/income-form.component';
 
@@ -31,6 +32,7 @@ ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule, Validat
 })
 export class IncomeComponent implements OnInit {
   readonly incomeService = inject(IncomeService);
+  private readonly user = inject(UserService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly snackbar = inject(MatSnackBar);
@@ -40,6 +42,13 @@ export class IncomeComponent implements OnInit {
   readonly showForm = signal(false);
   readonly editingItem = signal<Income | null>(null);
   readonly saving = signal(false);
+
+  readonly filteredIncomes = computed(() => {
+    const all = this.incomeService.income();
+    const selected = this.user.selectedAccount();
+    if (!selected) return all;
+    return all.filter(i => i.account === selected.id);
+  });
 
   ngOnInit(): void {
     this.incomeService.loadIncome();
@@ -87,8 +96,8 @@ export class IncomeComponent implements OnInit {
   readonly defaultColDef: ColDef = { sortable: true, resizable: true };
 
   readonly metrics = computed<MetricCardConfig[]>(() => {
-    const incomes = this.incomeService.income();
-    const totalMonthly = this.incomeService.totalMonthlyIncome();
+    const incomes = this.filteredIncomes();
+    const totalMonthly = incomes.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
     const activeCount = incomes.filter(i => i.is_active).length;
 
     const metrics: MetricCardConfig[] = [

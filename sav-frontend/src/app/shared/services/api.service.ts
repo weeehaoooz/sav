@@ -120,9 +120,10 @@ export class ApiService {
   }
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
-  getDashboardSummary(userId?: number): Observable<DashboardSummary> {
+  getDashboardSummary(userId?: number, accountId?: number): Observable<DashboardSummary> {
     let params = new HttpParams();
     if (userId) params = params.set('user_id', userId);
+    if (accountId) params = params.set('account_id', accountId);
     return this.http.get<DashboardSummary>(`${this.base}/dashboard/summary/`, { params });
   }
 

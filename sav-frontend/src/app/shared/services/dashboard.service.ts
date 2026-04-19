@@ -14,9 +14,9 @@ export class DashboardService {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  loadDashboardSummary(): void {
+  loadDashboardSummary(accountId?: number): void {
     this.loading.set(true);
-    this.api.getDashboardSummary().subscribe({
+    this.api.getDashboardSummary(undefined, accountId).subscribe({
       next: (data) => {
         this._dashboard.set(data);
         this.loading.set(false);
