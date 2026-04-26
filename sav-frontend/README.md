@@ -1,59 +1,40 @@
-# SavFrontend
+# 🎨 SAV Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.7.
+This is the Angular frontend for the **SAV** Personal Financial Planning platform.
 
-## Development server
+## 🚀 Getting Started
 
-To start a local development server, run:
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-```bash
-ng serve
-```
+2. **Start Development Server**:
+   ```bash
+   npm start
+   ```
+   Navigate to `http://localhost:4200/`.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## 🛠️ Tech Stack
 
-## Code scaffolding
+- **Framework**: Angular 21 (Signals, Standalone Components)
+- **Styling**: SCSS (Theme-aware, Dark/Light modes)
+- **Data Grid**: AG Grid (Enterprise-grade tables)
+- **Testing**: Vitest
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🏗️ Architecture
 
-```bash
-ng generate component component-name
-```
+- `src/app/core`: Singleton services, guards, and interceptors.
+- `src/app/shared`: Reusable UI components, pipes, and directives.
+- `src/app/features`: Domain-specific modules (Simulations, Assets, etc.).
+- `src/app/theme`: Design system tokens and global styling.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## 🧪 Testing
 
 ```bash
-ng test
+npm test
 ```
 
-## Running end-to-end tests
+## 📄 Reference
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+For the full project documentation and backend setup, please refer to the [Root README](../README.md).
