@@ -1,0 +1,186 @@
+<div class="page-content fade-in">
+  <app-page-header title="Singapore Income Tax Simulation"
+    subtitle="Plan your tax reliefs and see your estimated tax savings." />
+
+  <section class="performance-summary" *ngIf="result">
+    @for (m of metrics(); track m.label) {
+    <app-metric-card [config]="m" />
+    }
+  </section>
+
+  <div class="simulation-grid">
+    <div class="inputs-section">
+      <div class="glass-card section-card profile-card">
+        <div class="card-header">
+          <mat-icon>account_circle</mat-icon>
+          <h3>Profile Selection</h3>
+        </div>
+        <div class="form-group">
+          <label>Evaluating Profile</label>
+          <div class="profile-options">
+            @for (account of userService.accounts(); track account.id) {
+              <button 
+                class="profile-option" 
+                [class.active]="simulationAccount()?.id === account.id"
+                (click)="selectAccount(account)"
+                type="button"
+              >
+                <div class="avatar">
+                  {{ getInitials(account.display_name) }}
+                </div>
+                <div class="profile-info">
+                  <span class="name">{{ account.display_name }}</span>
+                  <span class="type">{{ account.account_type }}</span>
+                </div>
+                <mat-icon class="check-icon" *ngIf="simulationAccount()?.id === account.id">check_circle</mat-icon>
+              </button>
+            }
+          </div>
+          <small>The simulation will use the income and birth date of the selected profile.</small>
+        </div>
+
+        <div class="income-selection-section" *ngIf="simulationAccount()">
+          <div class="divider"></div>
+          <label>Source of Incomes</label>
+          
+          <div class="income-list" *ngIf="profileIncomes().length > 0; else noIncome">
+            @for (income of profileIncomes(); track income.id) {
+              <div class="income-item" [class.selected]="selectedIncomeIds().has(income.id)" (click)="toggleIncome(income.id)">
+                <div class="income-checkbox">
+                  <mat-icon>{{ selectedIncomeIds().has(income.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                </div>
+                <div class="income-details">
+                  <span class="income-name">{{ income.name }}</span>
+                  <span class="income-type">{{ income.income_type | titlecase }}</span>
+                </div>
+                <div class="income-amount">
+                  {{ income.amount | currency:'SGD':'symbol':'1.0-0' }}/mo
+                </div>
+              </div>
+            }
+          </div>
+
+          <ng-template #noIncome>
+            <div class="not-applicable-alert">
+              <mat-icon>info</mat-icon>
+              <div class="alert-content">
+                <div class="title">Not Applicable</div>
+                <p>This profile has no active income sources and is likely not applicable for individual income tax.</p>
+              </div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="glass-card section-card">
+        <div class="card-header">
+          <mat-icon>payments</mat-icon>
+          <h3>Base Income & Reliefs</h3>
+        </div>
+
+        <div class="form-group">
+          <label>Assessable Income (S$)</label>
+          <div class="input-wrapper">
+            <input type="number" [(ngModel)]="assessableIncome" (change)="simulate()" class="form-control has-prefix"
+              placeholder="0">
+            <span class="prefix">$</span>
+          </div>
+          <small>Your gross income minus allowable expenses.</small>
+        </div>
+      </div>
+
+      <div class="glass-card section-card">
+        <div class="card-header">
+          <mat-icon>tune</mat-icon>
+          <h3>Simulate Additional Reliefs</h3>
+        </div>
+
+        <div class="form-group range-group">
+          <div class="range-header">
+            <label>SRS Contribution</label>
+            <span class="range-value">{{ srsContribution | currency:'SGD':'symbol':'1.0-0' }}</span>
+          </div>
+          <input type="range" min="0" max="15300" step="100" [(ngModel)]="srsContribution" (input)="simulate()"
+            class="modern-range">
+          <small>Max S$15,300 for Singapore Citizens / PRs.</small>
+        </div>
+
+        <div class="form-group range-group">
+          <div class="range-header">
+            <label>CPF Cash Top-Up</label>
+            <span class="range-value">{{ cpfCashTopUp | currency:'SGD':'symbol':'1.0-0' }}</span>
+          </div>
+          <input type="range" min="0" max="8000" step="100" [(ngModel)]="cpfCashTopUp" (input)="simulate()"
+            class="modern-range">
+          <small>Max S$8,000 for self top-up to Special/Retirement Account.</small>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="premium-checkbox">
+            <input type="checkbox" [(ngModel)]="spouseRelief" (change)="simulate()">
+            <span class="checkmark"></span>
+            <span class="label-text">Claim Spouse Relief (S$2,000)</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Qualifying Child Reliefs</label>
+          <div class="input-wrapper">
+            <input type="number" min="0" max="10" [(ngModel)]="childReliefs" (change)="simulate()" class="form-control has-suffix"
+              placeholder="0">
+            <span class="suffix">Children</span>
+          </div>
+          <small>S$4,000 per qualifying child.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-section">
+      <div class="glass-card breakdown-card" *ngIf="result">
+        <div class="card-header">
+          <mat-icon>analytics</mat-icon>
+          <h3>Tax Breakdown</h3>
+        </div>
+
+        <div class="breakdown-list">
+          <div class="breakdown-item">
+            <span class="label">Assessable Income</span>
+            <span class="value">{{ result.simulated.assessable_income | currency:'SGD' }}</span>
+          </div>
+          <div class="breakdown-item relief">
+            <span class="label">Total Reliefs (Capped at $80k)</span>
+            <span class="value">- {{ result.simulated.capped_reliefs | currency:'SGD' }}</span>
+          </div>
+          <div class="divider"></div>
+          <div class="breakdown-item highlight">
+            <span class="label">Chargeable Income</span>
+            <span class="value">{{ result.simulated.chargeable_income | currency:'SGD' }}</span>
+          </div>
+        </div>
+
+        <div class="tax-payable-display">
+          <div class="label">Estimated Tax Payable</div>
+          <div class="amount">{{ result.simulated.tax_payable | currency:'SGD' }}</div>
+          <div class="glow"></div>
+        </div>
+
+        <div class="savings-alert" *ngIf="result.tax_savings > 0">
+          <div class="alert-icon">
+            <mat-icon>celebration</mat-icon>
+          </div>
+          <div class="alert-content">
+            <div class="alert-title">Potential Tax Savings</div>
+            <div class="alert-desc">
+              You are saving <strong>{{ result.tax_savings | currency:'SGD' }}</strong> in taxes with these reliefs!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-overlay" *ngIf="loading">
+        <div class="spinner"></div>
+        <span>Recalculating...</span>
+      </div>
+    </div>
+  </div>
+</div>

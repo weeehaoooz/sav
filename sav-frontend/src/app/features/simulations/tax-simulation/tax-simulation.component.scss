@@ -1,0 +1,670 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.page-content {
+  padding: $space-xl;
+  max-width: $content-max-width;
+  margin: 0 auto;
+}
+
+.performance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $space-lg;
+  margin-bottom: $space-2xl;
+}
+
+.simulation-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-xl;
+  align-items: start;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+.glass-card {
+  @include glass-card;
+  padding: $space-xl;
+  margin-bottom: $space-lg;
+  transition: transform $transition-base, box-shadow $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: $space-md;
+    margin-bottom: $space-xl;
+    color: $accent-indigo-light;
+
+    mat-icon {
+      font-size: 1.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+
+    h3 {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-semibold;
+      margin: 0;
+      color: $text-primary;
+    }
+  }
+}
+
+.form-group {
+  margin-bottom: $space-xl;
+
+  label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    margin-bottom: $space-sm;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .prefix,
+    .suffix {
+      position: absolute;
+      color: $text-secondary;
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
+      pointer-events: none;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    .prefix {
+      left: $space-md;
+    }
+
+    .suffix {
+      right: $space-md;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: $space-md;
+      background: $bg-input;
+      border: 1px solid $border-subtle;
+      border-radius: $radius-md;
+      color: $text-primary;
+      font-size: $font-size-base;
+      transition: all $transition-fast;
+
+      &:focus {
+        outline: none;
+        border-color: $accent-indigo;
+        background: rgba($bg-input, 0.8);
+        box-shadow: 0 0 0 4px rgba($accent-indigo, 0.1);
+      }
+
+      &.has-prefix {
+        padding-left: 2.5rem;
+      }
+
+      &.has-suffix {
+        padding-right: 4.5rem;
+      }
+
+      &:focus ~ .prefix,
+      &:focus ~ .suffix {
+        color: $accent-indigo-light;
+      }
+    }
+
+    input[type="number"] {
+      padding-left: 2.25rem;
+
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+  }
+
+  // Removing previous profile-options inside form-group to avoid nesting issues
+
+  small {
+    display: block;
+    margin-top: $space-xs;
+    font-size: $font-size-xs;
+    color: $text-muted;
+  }
+}
+
+.range-group {
+  .range-header {
+    @include flex-between;
+    margin-bottom: $space-sm;
+
+    .range-value {
+      font-weight: $font-weight-bold;
+      color: $accent-indigo-light;
+      font-size: $font-size-lg;
+    }
+  }
+
+  .modern-range {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: $radius-full;
+    background: $bg-input;
+    outline: none;
+    margin: $space-md 0;
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: $accent-indigo;
+      cursor: pointer;
+      border: 2px solid $bg-primary;
+      box-shadow: $shadow-sm;
+      transition: all $transition-fast;
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba($accent-indigo, 0.15);
+      }
+    }
+  }
+}
+
+.premium-checkbox {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+
+    &:checked~.checkmark {
+      background-color: $accent-indigo;
+      border-color: $accent-indigo;
+
+      &:after {
+        display: block;
+      }
+    }
+  }
+
+  .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 22px;
+    width: 22px;
+    background-color: $bg-input;
+    border: 1px solid $border-subtle;
+    border-radius: $radius-sm;
+    transition: all $transition-fast;
+
+    &:after {
+      content: "";
+      position: absolute;
+      display: none;
+      left: 7px;
+      top: 3px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+  }
+
+  .label-text {
+    font-size: $font-size-base;
+    color: $text-primary;
+  }
+
+  &:hover input~.checkmark {
+    border-color: $accent-indigo;
+  }
+}
+
+.breakdown-card {
+  position: sticky;
+  top: $space-xl;
+
+  .breakdown-list {
+    margin-bottom: $space-2xl;
+
+    .breakdown-item {
+      @include flex-between;
+      padding: $space-sm 0;
+      font-size: $font-size-base;
+
+      .label {
+        color: $text-secondary;
+      }
+
+      .value {
+        color: $text-primary;
+        font-weight: $font-weight-medium;
+      }
+
+      &.relief .value {
+        color: $accent-emerald;
+      }
+
+      &.highlight {
+        font-size: $font-size-lg;
+        font-weight: $font-weight-semibold;
+        margin-top: $space-sm;
+
+        .label {
+          color: $text-primary;
+        }
+      }
+    }
+
+    .divider {
+      height: 1px;
+      background: $border-subtle;
+      margin: $space-md 0;
+      border-bottom: 1px dashed $border-medium;
+    }
+  }
+}
+
+.tax-payable-display {
+  background: linear-gradient(135deg, $accent-indigo, $accent-indigo-dark);
+  padding: $space-xl;
+  border-radius: $radius-lg;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: $shadow-lg, 0 8px 16px rgba($accent-indigo, 0.3);
+  margin-bottom: $space-xl;
+
+  .label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    margin-bottom: $space-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .amount {
+    color: white;
+    font-size: 2.75rem;
+    font-weight: $font-weight-bold;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+}
+
+.savings-alert {
+  @include flex-center;
+  gap: $space-lg;
+  background: rgba($accent-emerald, 0.1);
+  border: 1px solid rgba($accent-emerald, 0.2);
+  padding: $space-lg;
+  border-radius: $radius-lg;
+  animation: slideUp $transition-slow;
+
+  .alert-icon {
+    @include flex-center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: rgba($accent-emerald, 0.15);
+    color: $accent-emerald;
+    border-radius: $radius-md;
+
+    mat-icon {
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  .alert-content {
+    flex: 1;
+
+    .alert-title {
+      font-weight: $font-weight-bold;
+      color: $accent-emerald;
+      font-size: $font-size-lg;
+      margin-bottom: 2px;
+    }
+
+    .alert-desc {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+
+      strong {
+        color: $accent-emerald;
+      }
+    }
+  }
+}
+
+.loading-overlay {
+  @include flex-center;
+  flex-direction: column;
+  gap: $space-md;
+  padding: $space-3xl;
+  color: $text-muted;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba($accent-indigo, 0.1);
+    border-top-color: $accent-indigo;
+    border-radius: 50%;
+    animation: spin 1s infinite linear;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.light-theme {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.4);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.7);
+    }
+  }
+
+  .tax-payable-display {
+    box-shadow: 0 8px 16px rgba($accent-indigo, 0.2);
+  }
+
+  .savings-alert {
+    background: rgba($accent-emerald, 0.05);
+  }
+}
+.profile-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-md;
+  margin-bottom: $space-sm;
+  width: 100%;
+}
+
+.profile-option {
+  /* Reset button defaults */
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid $border-subtle;
+  border-radius: $radius-lg;
+  padding: $space-md $space-lg;
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  cursor: pointer;
+  transition: all $transition-base;
+  text-align: left;
+  min-width: 220px;
+  flex: 1;
+  color: $text-primary;
+  font-family: inherit;
+  position: relative;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: $accent-indigo;
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+
+  &.active {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: $accent-indigo;
+    box-shadow: 0 0 0 1px $accent-indigo, 0 8px 24px rgba(99, 102, 241, 0.2);
+
+    .avatar {
+      background: $accent-indigo;
+      color: white;
+      border-color: transparent;
+    }
+
+    .check-icon {
+      color: $accent-indigo;
+      opacity: 1;
+    }
+  }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: $radius-full;
+    background: rgba(255, 255, 255, 0.03);
+    color: $text-secondary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    flex-shrink: 0;
+    border: 1px solid $border-subtle;
+    transition: all $transition-base;
+  }
+
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    overflow: hidden;
+
+    .name {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .type {
+      font-size: $font-size-xs;
+      color: $text-muted;
+      text-transform: capitalize;
+    }
+  }
+
+  .check-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    opacity: 0.1;
+    transition: all $transition-fast;
+    margin-left: auto;
+  }
+}
+
+.income-selection-section {
+  margin-top: $space-lg;
+
+  .divider {
+    height: 1px;
+    background: $border-subtle;
+    margin: $space-lg 0;
+    opacity: 0.5;
+  }
+
+  label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    margin-bottom: $space-md;
+  }
+}
+
+.income-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.income-item {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba($accent-indigo, 0.5);
+  }
+
+  &.selected {
+    background: rgba($accent-indigo, 0.08);
+    border-color: $accent-indigo;
+
+    .income-checkbox mat-icon {
+      color: $accent-indigo;
+    }
+
+    .income-amount {
+      color: $text-primary;
+    }
+  }
+
+  .income-checkbox {
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: $text-muted;
+      transition: color $transition-fast;
+    }
+  }
+
+  .income-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+
+    .income-name {
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+    }
+
+    .income-type {
+      font-size: $font-size-xs;
+      color: $text-muted;
+    }
+  }
+
+  .income-amount {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    transition: color $transition-fast;
+  }
+}
+
+.not-applicable-alert {
+  display: flex;
+  gap: $space-md;
+  padding: $space-lg;
+  background: rgba($accent-cyan, 0.05);
+  border: 1px solid rgba($accent-cyan, 0.1);
+  border-radius: $radius-lg;
+  color: $text-secondary;
+
+  mat-icon {
+    color: $accent-cyan;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .alert-content {
+    .title {
+      font-weight: $font-weight-bold;
+      color: $text-primary;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin: 0;
+      font-size: $font-size-sm;
+      line-height: 1.5;
+    }
+  }
+}
+
+body.light-theme {
+  .income-item {
+    background: rgba(0, 0, 0, 0.02);
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    &.selected {
+      background: rgba($accent-indigo, 0.05);
+    }
+  }
+
+  .not-applicable-alert {
+    background: rgba($accent-cyan, 0.03);
+  }
+}

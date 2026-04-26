@@ -325,7 +325,7 @@ export class AssetsComponent implements OnInit {
     let valueToSend = newValue;
     // ensure numeric for current values and virtual child amounts
     if (colDef.field === 'current_value' || data.isVirtualChild) {
-      valueToSend = Number(newValue);
+      valueToSend = Math.round(Number(newValue) * 100) / 100;
       if (isNaN(valueToSend)) return;
     }
 
@@ -386,6 +386,14 @@ export class AssetsComponent implements OnInit {
       const d = new Date(data.valuation_date);
       data.valuation_date = d.toISOString().split('T')[0];
     }
+
+    // Round decimal fields
+    const decimalFields = ['current_value', 'acquisition_value', 'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra'];
+    decimalFields.forEach(f => {
+      if (data[f] !== undefined && data[f] !== null) {
+        data[f] = Math.round(Number(data[f]) * 100) / 100;
+      }
+    });
 
     const editingAsset = this.selectedAssetForEdit();
     const id = editingAsset?.id;

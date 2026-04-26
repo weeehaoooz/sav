@@ -299,7 +299,7 @@ export class AssetDetailsComponent implements OnInit {
 
     this.saving.set(true);
     const payload: Partial<AssetValuationHistory> = {
-      [colDef.field]: colDef.field.includes('date') ? newValue : Number(newValue)
+      [colDef.field]: colDef.field.includes('date') ? newValue : Math.round(Number(newValue) * 100) / 100
     };
 
     this.api.updateAssetHistory(data.id, payload).subscribe({
@@ -403,9 +403,10 @@ export class AssetDetailsComponent implements OnInit {
       payload.cpf_sa = sa;
       payload.cpf_ma = ma;
       payload.cpf_ra = ra;
-      payload.current_value = oa + sa + ma + ra;
+      // Round to 2 decimal places to avoid floating point precision issues
+      payload.current_value = Math.round((oa + sa + ma + ra) * 100) / 100;
     } else {
-      payload.current_value = Number(raw.current_value) || 0;
+      payload.current_value = Math.round((Number(raw.current_value) || 0) * 100) / 100;
     }
 
     const editEntry = this.editingEntry();

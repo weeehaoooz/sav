@@ -1,80 +1,228 @@
 @use '../../../styles/variables' as *;
 @use '../../../styles/mixins' as *;
 
-:host { display: block; }
+.page-content {
+  padding: $space-xl;
+  max-width: $content-max-width;
+  margin: 0 auto;
+}
 
-.sim-layout {
+.simulations-grid {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: $space-lg;
-  align-items: start;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: $space-xl;
+  margin-top: $space-2xl;
 }
 
-.params-panel {
-  padding: $space-lg;
-}
-
-.panel-title {
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $text-primary;
-  margin-bottom: $space-md;
-}
-
-.params-form {
+.sim-card {
+  @include glass-card;
   display: flex;
-  flex-direction: column;
-  gap: $space-sm;
+  align-items: center;
+  padding: $space-xl;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid $border-subtle;
+  transition: all $transition-base;
+  min-height: 120px;
 
-  mat-form-field { width: 100%; }
-}
-
-.param-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: $space-sm;
-}
-
-.run-btn {
-  width: 100%;
-  height: 44px;
-  margin-top: $space-sm;
-}
-
-.results-area {
-  display: flex;
-  flex-direction: column;
-  gap: $space-lg;
-}
-
-.empty-state {
-  @include flex-center;
-  flex-direction: column;
-  gap: $space-md;
-  padding: $space-3xl;
-  text-align: center;
-
-  mat-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: $text-muted;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba($accent-indigo, 0.08), transparent 70%);
+    opacity: 0;
+    transition: opacity $transition-base;
   }
 
-  h3 {
-    font-size: $font-size-xl;
-    color: $text-secondary;
+  &:hover {
+    transform: translateY(-6px);
+    border-color: rgba($accent-indigo, 0.3);
+    background: rgba($bg-card, 0.85);
+    box-shadow: $shadow-lg, 0 0 30px rgba($accent-indigo, 0.08);
+    align-items: flex-start;
+
+    &::before {
+      opacity: 1;
+    }
+
+    .sim-description {
+      grid-template-rows: 1fr;
+      margin-top: $space-md;
+      opacity: 1;
+    }
+
+    .sim-icon {
+      transform: scale(1.1) rotate(-5deg);
+      background: rgba($accent-indigo, 0.15);
+      border-color: rgba($accent-indigo, 0.2);
+
+      .icon-glow {
+        opacity: 1;
+        transform: scale(1.5);
+      }
+    }
+
+    .sim-cta {
+      .cta-text {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .cta-icon {
+        background: $accent-indigo;
+        color: white;
+        transform: translateX(4px);
+      }
+    }
   }
 
-  p {
-    font-size: $font-size-sm;
-    color: $text-muted;
-    max-width: 360px;
+  .sim-card-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
 
-    strong { color: $accent-indigo-light; }
+  .sim-header {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .sim-icon {
+    @include flex-center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: $radius-lg;
+    background: rgba($accent-indigo, 0.1);
+    color: $accent-indigo-light;
+    margin-right: $space-lg;
+    flex-shrink: 0;
+    transition: all $transition-base;
+    box-shadow: $shadow-sm;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    &.tax-icon {
+      background: rgba($accent-emerald, 0.1);
+      color: $accent-emerald;
+
+      .icon-glow {
+        background: radial-gradient(circle, rgba($accent-emerald, 0.2) 0%, transparent 70%);
+      }
+    }
+
+    .icon-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba($accent-indigo, 0.2) 0%, transparent 70%);
+      opacity: 0;
+      transition: all $transition-base;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    mat-icon {
+      font-size: 2.25rem;
+      width: 2.25rem;
+      height: 2.25rem;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  .sim-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-xs;
+
+    h3 {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-semibold;
+      margin: 0;
+      color: $text-primary;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .short-desc {
+      color: $text-secondary;
+      font-size: $font-size-sm;
+      margin: 0;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+  }
+
+  .sim-description {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows $transition-base, opacity $transition-base, margin $transition-base;
+    opacity: 0;
+    overflow: hidden;
+
+    p {
+      color: $text-muted;
+      line-height: 1.6;
+      font-size: $font-size-base;
+      margin: 0;
+      min-height: 0;
+      padding-right: $space-md;
+    }
+  }
+
+  .sim-cta {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    z-index: 1;
+    align-self: center;
+    transition: all $transition-base;
+
+    .cta-text {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: $accent-indigo-light;
+      opacity: 0;
+      transform: translateX(10px);
+      transition: all $transition-base;
+      white-space: nowrap;
+    }
+
+    .cta-icon {
+      @include flex-center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: $radius-full;
+      background: rgba($text-muted, 0.1);
+      color: $text-muted;
+      transition: all $transition-base;
+
+      mat-icon {
+        font-size: 1.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+  }
+
+  &:hover .sim-cta {
+    align-self: flex-start;
+    margin-top: $space-sm;
+  }
+}
+
+body.light-theme {
+  .sim-card {
+    background: rgba(255, 255, 255, 0.6);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba($accent-indigo, 0.2);
+    }
+
+    .sim-cta .cta-icon {
+      background: rgba(0, 0, 0, 0.05);
+    }
   }
 }

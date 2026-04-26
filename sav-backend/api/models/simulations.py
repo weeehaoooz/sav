@@ -9,6 +9,7 @@ class Simulation(models.Model):
         ('fire', 'FIRE Analysis'),
         ('education', 'Education Fund'),
         ('property_upgrade', 'Property Upgrade'),
+        ('tax', 'Tax Simulation'),
     ]
 
     account = models.ForeignKey(

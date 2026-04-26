@@ -10,6 +10,7 @@ urlpatterns = [
     path('', include('api.urls.expenses')),
     path('', include('api.urls.simulations')),
     path('', include('api.urls.dashboard')),
+    path('taxes/', include('api.urls.taxes')),
     
     # Auth
     path('auth/', include('dj_rest_auth.urls')),

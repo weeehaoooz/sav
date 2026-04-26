@@ -16,6 +16,19 @@ class AssetValuationHistorySerializer(serializers.ModelSerializer):
             'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra', 'created_at'
         ]
 
+    def to_internal_value(self, data):
+        # Round decimal fields to 2 decimal places to avoid precision errors
+        decimal_fields = ['current_value', 'acquisition_value', 'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra']
+        for field in decimal_fields:
+            if field in data and data[field] is not None:
+                try:
+                    data[field] = round(float(data[field]), 2)
+                except (ValueError, TypeError):
+                    pass
+            elif field in data and data[field] is None:
+                data[field] = 0
+        return super().to_internal_value(data)
+
 from django.utils import timezone
 
 class AssetSerializer(serializers.ModelSerializer):
@@ -134,9 +147,15 @@ class AssetWriteSerializer(serializers.ModelSerializer):
         ]
 
     def to_internal_value(self, data):
-        decimal_fields = ['acquisition_value', 'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra']
+        # Round decimal fields to 2 decimal places to avoid precision errors
+        decimal_fields = ['current_value', 'acquisition_value', 'cpf_oa', 'cpf_sa', 'cpf_ma', 'cpf_ra']
         for field in decimal_fields:
-            if field in data and data[field] is None:
+            if field in data and data[field] is not None:
+                try:
+                    data[field] = round(float(data[field]), 2)
+                except (ValueError, TypeError):
+                    pass
+            elif field in data and data[field] is None:
                 data[field] = 0
         return super().to_internal_value(data)
 

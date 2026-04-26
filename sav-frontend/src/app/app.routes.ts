@@ -41,6 +41,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/simulations/simulations.component').then(m => m.SimulationsComponent),
       },
       {
+        path: 'simulations/tax',
+        loadComponent: () => import('./features/simulations/tax-simulation/tax-simulation.component').then(m => m.TaxSimulationComponent),
+      },
+      {
         path: 'family',
         loadComponent: () => import('./accounts/family/family.component').then(m => m.FamilyComponent),
       },

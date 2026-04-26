@@ -33,7 +33,7 @@ class Asset(models.Model):
 
     def save(self, *args, **kwargs):
         if self.asset_type == 'cpf':
-            self.current_value = self.cpf_oa + self.cpf_sa + self.cpf_ma + self.cpf_ra
+            self.current_value = round(self.cpf_oa + self.cpf_sa + self.cpf_ma + self.cpf_ra, 2)
         
         # Check if we are updating an existing asset or creating a new one
         is_new = self.pk is None
@@ -156,6 +156,22 @@ class AssetValuationHistory(models.Model):
     class Meta:
         db_table = 'asset_valuation_history'
         ordering = ['-valuation_date', '-created_at']
+
+    def save(self, *args, **kwargs):
+        # Round values to 2 decimal places
+        self.acquisition_value = round(self.acquisition_value, 2)
+        self.cpf_oa = round(self.cpf_oa, 2)
+        self.cpf_sa = round(self.cpf_sa, 2)
+        self.cpf_ma = round(self.cpf_ma, 2)
+        self.cpf_ra = round(self.cpf_ra, 2)
+
+        # If CPF, calculate current_value from sub-accounts
+        if self.asset.asset_type == 'cpf':
+            self.current_value = round(self.cpf_oa + self.cpf_sa + self.cpf_ma + self.cpf_ra, 2)
+        else:
+            self.current_value = round(self.current_value, 2)
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.asset.name} - {self.valuation_date} - ${self.current_value}"
