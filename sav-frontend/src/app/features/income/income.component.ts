@@ -13,8 +13,11 @@ import { MetricCardComponent, MetricCardConfig } from '../../shared/components/m
 import { savGridTheme } from '../../shared/ag-grid-theme';
 import { Income } from '../../shared/models/income.model';
 import { UserService } from '../../shared/services/user.service';
+import { TaxService } from '../../shared/services/tax.service';
+import { CpfService } from '../../shared/services/cpf.service';
 import { ActionsCellRendererComponent } from '../../shared/components/actions-cell-renderer/actions-cell-renderer.component';
 import { IncomeFormComponent } from './components/income-form/income-form.component';
+import { MatIconModule } from '@angular/material/icon';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule, ValidationModule]);
 
@@ -22,7 +25,7 @@ ModuleRegistry.registerModules([ClientSideRowModelModule, TooltipModule, Validat
   selector: 'app-income',
   standalone: true,
   imports: [
-    CommonModule, MatSnackBarModule, AgGridModule,
+    CommonModule, MatSnackBarModule, AgGridModule, MatIconModule,
     PageHeaderComponent, MetricCardComponent,
     IncomeFormComponent
   ],
@@ -36,6 +39,8 @@ export class IncomeComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly snackbar = inject(MatSnackBar);
+  private readonly taxService = inject(TaxService);
+  private readonly cpfService = inject(CpfService);
 
   readonly gridTheme = savGridTheme;
 
@@ -97,16 +102,47 @@ export class IncomeComponent implements OnInit {
 
   readonly metrics = computed<MetricCardConfig[]>(() => {
     const incomes = this.filteredIncomes();
-    const totalMonthly = incomes.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
-    const activeCount = incomes.filter(i => i.is_active).length;
+    const activeIncomes = incomes.filter(i => i.is_active);
 
+    const totalMonthly = activeIncomes.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+    const activeCount = activeIncomes.length;
+
+    // --- 1. Basic Metrics ---
     const metrics: MetricCardConfig[] = [
       { label: 'Total Monthly', value: totalMonthly, format: 'currency', icon: 'payments', accentColor: '#10b981' },
       { label: 'Annual Projected', value: totalMonthly * 12, format: 'currency', icon: 'analytics', accentColor: '#3b82f6' },
-      { label: 'Income Sources', value: incomes.length, format: 'number', icon: 'list', accentColor: '#6366f1' },
       { label: 'Active Streams', value: activeCount, format: 'number', icon: 'check_circle', accentColor: '#f59e0b' },
     ];
 
+    // --- 2. Tax Estimation ---
+    let totalAnnualGross = 0;
+    let totalAnnualCpf = 0;
+
+    activeIncomes.forEach(inc => {
+      const annualGross = (Number(inc.amount) || 0) * 12;
+      totalAnnualGross += annualGross;
+
+      if (inc.has_cpf) {
+        const account = this.user.accounts().find(a => a.id === inc.account);
+        const age = this.cpfService.calculateAge(account?.date_of_birth);
+        const monthlyCpf = this.cpfService.calculateMonthlyCpf(Number(inc.amount) || 0, age);
+        totalAnnualCpf += monthlyCpf.employee * 12;
+      }
+    });
+
+    const chargeableIncome = Math.max(0, totalAnnualGross - totalAnnualCpf);
+    const estimatedTax = this.taxService.calculateAnnualTax(chargeableIncome);
+
+    metrics.push({
+      label: 'Income Tax Payable',
+      value: estimatedTax,
+      format: 'currency',
+      icon: 'receipt_long',
+      accentColor: '#ef4444',
+      subtitle: `Est. for YA ${new Date().getFullYear() + 1}`
+    });
+
+    // --- 3. Highlight Top Stream ---
     if (incomes.length > 0) {
       const topStream = [...incomes].sort((a, b) => b.amount - a.amount)[0];
       metrics.push({

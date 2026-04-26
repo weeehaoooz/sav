@@ -3,8 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaxService, TaxBracket, TaxSimulationResult } from '../services/tax.service';
-import { Subject, debounceTime, switchMap, tap } from 'rxjs';
+import { Subject, switchMap, tap, timer, debounce, catchError, of, EMPTY } from 'rxjs';
 import { IncomeService } from '../../../shared/services/income.service';
+import { ApiService } from '../../../shared/services/api.service';
 import { UserService } from '../../../shared/services/user.service';
 import { Account } from '../../../shared/models/account.model';
 import { ThemeService } from '../../../shared/services/theme.service';
@@ -12,11 +13,12 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { MetricCardComponent, MetricCardConfig } from '../../../shared/components/metric-card/metric-card.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-tax-simulation',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent, MetricCardComponent, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, FormsModule, PageHeaderComponent, MetricCardComponent, MatIconModule, MatTooltipModule, MatSnackBarModule],
   templateUrl: './tax-simulation.component.html',
   styleUrls: ['./tax-simulation.component.scss']
 })
@@ -25,7 +27,7 @@ export class TaxSimulationComponent implements OnInit {
   result: TaxSimulationResult | null = null;
   loading = false;
   error = '';
-  private simulationTrigger$ = new Subject<void>();
+  private simulationTrigger$ = new Subject<boolean>();
   private destroyRef = inject(DestroyRef);
 
   // Selection state
@@ -50,10 +52,18 @@ export class TaxSimulationComponent implements OnInit {
 
   private taxService = inject(TaxService);
   private incomeService = inject(IncomeService);
+  private apiService = inject(ApiService);
+  private snackbar = inject(MatSnackBar);
   public userService = inject(UserService);
   public themeService = inject(ThemeService);
 
   readonly simulationAccount = signal<Account | null>(null);
+
+  // Quick add income form state
+  readonly isAddingIncome = signal(false);
+  readonly savingIncome = signal(false);
+  quickIncomeName = '';
+  quickIncomeAmount: number | null = null;
 
   readonly metrics = computed<MetricCardConfig[]>(() => {
     if (!this.result) return [];
@@ -106,7 +116,7 @@ export class TaxSimulationComponent implements OnInit {
       untracked(() => {
         const currentIds = this.selectedIncomeIds();
         const newIds = new Set(incomes.map(i => i.id));
-        
+
         // Simple heuristic: if sizes are different or one doesn't exist in the other
         if (currentIds.size === 0 || [...newIds].some(id => !currentIds.has(id))) {
           this.selectedIncomeIds.set(newIds);
@@ -121,7 +131,7 @@ export class TaxSimulationComponent implements OnInit {
 
       if (account) {
         const filteredIncomes = incomes.filter(i => selectedIds.has(i.id));
-        
+
         // Calculate annual assessable income
         const monthlyGross = filteredIncomes.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
         this.assessableIncome = monthlyGross * 12;
@@ -140,7 +150,8 @@ export class TaxSimulationComponent implements OnInit {
         }
 
         this.baseReliefs = [earnedIncomeRelief, annualCpfRelief];
-        this.simulate();
+        // Account changes should be instant
+        this.simulate(true);
       }
     });
 
@@ -149,8 +160,11 @@ export class TaxSimulationComponent implements OnInit {
 
   private setupSimulationPipeline(): void {
     this.simulationTrigger$.pipe(
-      debounceTime(200),
-      tap(() => this.loading = true),
+      tap(() => {
+        this.loading = true;
+        this.error = '';
+      }),
+      debounce(immediate => immediate ? of(null) : timer(200)),
       switchMap(() => {
         const childReliefAmount = this.childReliefs * 4000;
         const additionalReliefs = [
@@ -159,18 +173,20 @@ export class TaxSimulationComponent implements OnInit {
           this.spouseRelief ? 2000 : 0,
           childReliefAmount
         ];
-        return this.taxService.simulateTax(this.assessableIncome, this.baseReliefs, additionalReliefs);
+        return this.taxService.simulateTax(this.assessableIncome, this.baseReliefs, additionalReliefs).pipe(
+          catchError(err => {
+            console.error('Tax simulation failed:', err);
+            this.error = 'Simulation failed.';
+            this.loading = false;
+            return EMPTY;
+          })
+        );
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (data) => {
         this.result = data;
         this.loading = false;
-      },
-      error: (err) => {
-        this.error = 'Simulation failed.';
-        this.loading = false;
-        console.error(err);
       }
     });
   }
@@ -213,12 +229,61 @@ export class TaxSimulationComponent implements OnInit {
     this.selectedIncomeIds.set(current);
   }
 
-  simulate(): void {
+  simulate(immediate = false): void {
     if (this.assessableIncome <= 0) {
       this.result = null;
+      this.loading = false;
       return;
     }
 
-    this.simulationTrigger$.next();
+    this.loading = true;
+    this.simulationTrigger$.next(immediate);
+  }
+
+  deleteIncome(id: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.incomeService.removeIncome(id);
+    this.snackbar.open('Income source removed', 'Close', { duration: 3000 });
+  }
+
+  openQuickAdd(): void {
+    this.quickIncomeName = '';
+    this.quickIncomeAmount = null;
+    this.isAddingIncome.set(true);
+  }
+
+  cancelQuickAdd(): void {
+    this.isAddingIncome.set(false);
+    this.quickIncomeName = '';
+    this.quickIncomeAmount = null;
+  }
+
+  saveQuickIncome(): void {
+    const account = this.simulationAccount();
+    if (!account || !this.quickIncomeName.trim() || !this.quickIncomeAmount || this.quickIncomeAmount <= 0) return;
+
+    this.savingIncome.set(true);
+    this.apiService.createIncome({
+      name: this.quickIncomeName.trim(),
+      amount: this.quickIncomeAmount,
+      account: account.id,
+      income_type: 'employment',
+      has_cpf: true,
+      is_active: true,
+      notes: 'Added via Tax Simulation'
+    }).subscribe({
+      next: (newIncome) => {
+        this.incomeService.addIncome(newIncome);
+        this.savingIncome.set(false);
+        this.isAddingIncome.set(false);
+        this.quickIncomeName = '';
+        this.quickIncomeAmount = null;
+        this.snackbar.open('Income source added', 'Close', { duration: 3000 });
+      },
+      error: () => {
+        this.savingIncome.set(false);
+        this.snackbar.open('Failed to add income source', 'Close', { duration: 3000 });
+      }
+    });
   }
 }

@@ -2,7 +2,7 @@
   <app-page-header title="Singapore Income Tax Simulation"
     subtitle="Plan your tax reliefs and see your estimated tax savings." />
 
-  <section class="performance-summary" *ngIf="result">
+  <section class="performance-summary" *ngIf="result" [class.stale]="loading">
     @for (m of metrics(); track m.label) {
     <app-metric-card [config]="m" />
     }
@@ -19,21 +19,17 @@
           <label>Evaluating Profile</label>
           <div class="profile-options">
             @for (account of userService.accounts(); track account.id) {
-              <button 
-                class="profile-option" 
-                [class.active]="simulationAccount()?.id === account.id"
-                (click)="selectAccount(account)"
-                type="button"
-              >
-                <div class="avatar">
-                  {{ getInitials(account.display_name) }}
-                </div>
-                <div class="profile-info">
-                  <span class="name">{{ account.display_name }}</span>
-                  <span class="type">{{ account.account_type }}</span>
-                </div>
-                <mat-icon class="check-icon" *ngIf="simulationAccount()?.id === account.id">check_circle</mat-icon>
-              </button>
+            <button class="profile-option" [class.active]="simulationAccount()?.id === account.id"
+              (click)="selectAccount(account)" type="button">
+              <div class="avatar">
+                {{ getInitials(account.display_name) }}
+              </div>
+              <div class="profile-info">
+                <span class="name">{{ account.display_name }}</span>
+                <span class="type">{{ account.account_type }}</span>
+              </div>
+              <mat-icon class="check-icon" *ngIf="simulationAccount()?.id === account.id">check_circle</mat-icon>
+            </button>
             }
           </div>
           <small>The simulation will use the income and birth date of the selected profile.</small>
@@ -41,22 +37,33 @@
 
         <div class="income-selection-section" *ngIf="simulationAccount()">
           <div class="divider"></div>
-          <label>Source of Incomes</label>
-          
+          <div class="income-section-header">
+            <label>Source of Incomes</label>
+            <button class="btn-add-income" (click)="openQuickAdd()" type="button" *ngIf="!isAddingIncome()">
+              <mat-icon>add</mat-icon>
+              Add Source
+            </button>
+          </div>
+
           <div class="income-list" *ngIf="profileIncomes().length > 0; else noIncome">
             @for (income of profileIncomes(); track income.id) {
-              <div class="income-item" [class.selected]="selectedIncomeIds().has(income.id)" (click)="toggleIncome(income.id)">
-                <div class="income-checkbox">
-                  <mat-icon>{{ selectedIncomeIds().has(income.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
-                </div>
-                <div class="income-details">
-                  <span class="income-name">{{ income.name }}</span>
-                  <span class="income-type">{{ income.income_type | titlecase }}</span>
-                </div>
-                <div class="income-amount">
-                  {{ income.amount | currency:'SGD':'symbol':'1.0-0' }}/mo
-                </div>
+            <div class="income-item" [class.selected]="selectedIncomeIds().has(income.id)"
+              (click)="toggleIncome(income.id)">
+              <div class="income-checkbox">
+                <mat-icon>{{ selectedIncomeIds().has(income.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
               </div>
+              <div class="income-details">
+                <span class="income-name">{{ income.name }}</span>
+                <span class="income-type">{{ income.income_type | titlecase }}</span>
+              </div>
+              <div class="income-amount">
+                {{ income.amount | currency:'SGD':'symbol':'1.0-0' }}/mo
+              </div>
+              <button class="btn-delete-income" (click)="deleteIncome(income.id, $event)" type="button"
+                matTooltip="Remove income source">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
             }
           </div>
 
@@ -69,6 +76,40 @@
               </div>
             </div>
           </ng-template>
+
+          <!-- Quick Add Form -->
+          <div class="quick-add-form" *ngIf="isAddingIncome()">
+            <div class="quick-add-header">
+              <mat-icon>add_circle</mat-icon>
+              <span>New Income Source</span>
+            </div>
+            <div class="quick-add-fields">
+              <div class="field-group">
+                <label>Name</label>
+                <input type="text" class="quick-input" placeholder="e.g. Salary, Freelance..."
+                  [(ngModel)]="quickIncomeName" [disabled]="savingIncome()" autofocus>
+              </div>
+              <div class="field-group">
+                <label>Monthly Amount (S$)</label>
+                <div class="input-wrapper">
+                  <span class="prefix">$</span>
+                  <input type="number" class="quick-input has-prefix" placeholder="0" [(ngModel)]="quickIncomeAmount"
+                    [disabled]="savingIncome()" min="0">
+                </div>
+              </div>
+            </div>
+            <div class="quick-add-actions">
+              <button class="btn-cancel" (click)="cancelQuickAdd()" type="button" [disabled]="savingIncome()">
+                Cancel
+              </button>
+              <button class="btn-save" (click)="saveQuickIncome()" type="button"
+                [disabled]="savingIncome() || !quickIncomeName.trim() || !quickIncomeAmount || quickIncomeAmount <= 0">
+                <mat-icon *ngIf="!savingIncome()">check</mat-icon>
+                <span *ngIf="savingIncome()" class="spinner-sm"></span>
+                {{ savingIncome() ? 'Saving...' : 'Save' }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -81,8 +122,8 @@
         <div class="form-group">
           <label>Assessable Income (S$)</label>
           <div class="input-wrapper">
-            <input type="number" [(ngModel)]="assessableIncome" (change)="simulate()" class="form-control has-prefix"
-              placeholder="0">
+            <input type="number" [(ngModel)]="assessableIncome" (change)="simulate(true)"
+              class="form-control has-prefix" placeholder="0">
             <span class="prefix">$</span>
           </div>
           <small>Your gross income minus allowable expenses.</small>
@@ -117,7 +158,7 @@
 
         <div class="form-group checkbox-group">
           <label class="premium-checkbox">
-            <input type="checkbox" [(ngModel)]="spouseRelief" (change)="simulate()">
+            <input type="checkbox" [(ngModel)]="spouseRelief" (change)="simulate(true)">
             <span class="checkmark"></span>
             <span class="label-text">Claim Spouse Relief (S$2,000)</span>
           </label>
@@ -126,8 +167,8 @@
         <div class="form-group">
           <label>Qualifying Child Reliefs</label>
           <div class="input-wrapper">
-            <input type="number" min="0" max="10" [(ngModel)]="childReliefs" (change)="simulate()" class="form-control has-suffix"
-              placeholder="0">
+            <input type="number" min="0" max="10" [(ngModel)]="childReliefs" (change)="simulate(true)"
+              class="form-control has-suffix" placeholder="0">
             <span class="suffix">Children</span>
           </div>
           <small>S$4,000 per qualifying child.</small>
@@ -136,7 +177,7 @@
     </div>
 
     <div class="results-section">
-      <div class="glass-card breakdown-card" *ngIf="result">
+      <div class="glass-card breakdown-card" [class.stale]="loading" *ngIf="result">
         <div class="card-header">
           <mat-icon>analytics</mat-icon>
           <h3>Tax Breakdown</h3>

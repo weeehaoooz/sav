@@ -1,8 +1,103 @@
-@use '../../../styles/variables' as *; @use '../../../styles/mixins' as *;
-:host { display: block; }
-.content-split { display: grid; grid-template-columns: 1fr; gap: $space-lg; &.form-open { grid-template-columns: 1fr 360px; } }
-.table-wrapper { overflow: hidden; }
-.form-panel { padding: $space-lg; height: fit-content; }
-.form-header { @include flex-between; margin-bottom: $space-md; h4 { font-size: $font-size-base; font-weight: $font-weight-semibold; } }
-.income-form { display: flex; flex-direction: column; gap: $space-sm; mat-form-field { width: 100%; } }
-.form-actions { display: flex; gap: $space-sm; justify-content: flex-end; margin-top: $space-sm; }
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+:host {
+    display: block;
+}
+
+.content-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+
+    &.form-open {
+        grid-template-columns: 1fr 360px;
+    }
+}
+
+.table-wrapper {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: $radius-lg;
+}
+
+.grid-footer {
+    padding: $space-sm $space-md;
+    border-top: 1px solid $border-subtle;
+    background: $bg-card;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.count-badge {
+    display: flex;
+    align-items: center;
+    gap: $space-xs;
+    padding: 4px 12px;
+    background: $bg-input;
+    border: 1px solid $border-medium;
+    border-radius: $radius-full;
+    color: $text-secondary;
+    transition: all $transition-fast;
+
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: $accent-indigo-light;
+    }
+
+    .count-value {
+        font-size: $font-size-xs;
+        font-weight: $font-weight-bold;
+        color: $text-primary;
+    }
+
+    .count-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: $text-muted;
+    }
+
+    &:hover {
+        background: $bg-card-hover;
+        border-color: $border-strong;
+        transform: translateY(-1px);
+    }
+}
+
+.form-panel {
+    padding: $space-lg;
+    height: fit-content;
+}
+
+.form-header {
+    @include flex-between;
+    margin-bottom: $space-md;
+
+    h4 {
+        font-size: $font-size-base;
+        font-weight: $font-weight-semibold;
+    }
+}
+
+.income-form {
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+
+    mat-form-field {
+        width: 100%;
+    }
+}
+
+.form-actions {
+    display: flex;
+    gap: $space-sm;
+    justify-content: flex-end;
+    margin-top: $space-sm;
+}

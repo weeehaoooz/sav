@@ -12,6 +12,12 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: $space-lg;
   margin-bottom: $space-2xl;
+  transition: opacity $transition-base;
+
+  &.stale {
+    opacity: 0.7;
+    pointer-events: none;
+  }
 }
 
 .simulation-grid {
@@ -22,6 +28,22 @@
 
   @media (min-width: 1024px) {
     grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+.results-section {
+  position: relative;
+  min-height: 400px;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -252,6 +274,14 @@
 .breakdown-card {
   position: sticky;
   top: $space-xl;
+  transition: all $transition-base;
+  animation: slideUp $transition-slow;
+
+  &.stale {
+    opacity: 0.7;
+    filter: grayscale(0.2) blur(0.5px);
+    pointer-events: none;
+  }
 
   .breakdown-list {
     margin-bottom: $space-2xl;
@@ -379,19 +409,35 @@
 }
 
 .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   @include flex-center;
   flex-direction: column;
   gap: $space-md;
-  padding: $space-3xl;
-  color: $text-muted;
+  background: rgba($bg-primary, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+  border-radius: $radius-xl;
+  color: $text-primary;
+  animation: fadeIn $transition-fast;
 
   .spinner {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border: 3px solid rgba($accent-indigo, 0.1);
     border-top-color: $accent-indigo;
     border-radius: 50%;
-    animation: spin 1s infinite linear;
+    animation: spin 0.8s infinite linear;
+    box-shadow: 0 0 15px rgba($accent-indigo, 0.2);
+  }
+
+  span {
+    font-weight: $font-weight-medium;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -401,16 +447,9 @@
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 body.light-theme {
@@ -550,6 +589,219 @@ body.light-theme {
   }
 }
 
+.income-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-md;
+
+  label {
+    margin-bottom: 0;
+  }
+}
+
+.btn-add-income {
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+  padding: 6px $space-md;
+  background: rgba($accent-indigo, 0.12);
+  border: 1px solid rgba($accent-indigo, 0.3);
+  border-radius: $radius-full;
+  color: $accent-indigo-light;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: rgba($accent-indigo, 0.2);
+    border-color: $accent-indigo;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($accent-indigo, 0.2);
+  }
+}
+
+.quick-add-form {
+  margin-top: $space-md;
+  padding: $space-lg;
+  background: rgba($accent-indigo, 0.06);
+  border: 1px solid rgba($accent-indigo, 0.2);
+  border-radius: $radius-lg;
+  animation: slideDown $transition-base;
+
+  .quick-add-header {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    color: $accent-indigo-light;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $space-lg;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .quick-add-fields {
+    display: flex;
+    flex-direction: column;
+    gap: $space-md;
+  }
+
+  .field-group {
+    label {
+      display: block;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      color: $text-secondary;
+      margin-bottom: $space-xs;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      .prefix {
+        position: absolute;
+        left: $space-md;
+        color: $text-secondary;
+        font-size: $font-size-base;
+        font-weight: $font-weight-medium;
+        pointer-events: none;
+        z-index: 1;
+      }
+    }
+  }
+
+  .quick-input {
+    width: 100%;
+    padding: $space-sm $space-md;
+    background: $bg-input;
+    border: 1px solid $border-subtle;
+    border-radius: $radius-md;
+    color: $text-primary;
+    font-size: $font-size-base;
+    font-family: inherit;
+    transition: all $transition-fast;
+    box-sizing: border-box;
+
+    &.has-prefix {
+      padding-left: 2.25rem;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $accent-indigo;
+      background: rgba($accent-indigo, 0.05);
+      box-shadow: 0 0 0 3px rgba($accent-indigo, 0.1);
+    }
+
+    &::placeholder {
+      color: $text-muted;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &[type='number'] {
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      -moz-appearance: textfield;
+    }
+  }
+
+  .quick-add-actions {
+    display: flex;
+    gap: $space-sm;
+    justify-content: flex-end;
+    margin-top: $space-lg;
+
+    .btn-cancel {
+      padding: $space-sm $space-lg;
+      background: transparent;
+      border: 1px solid $border-medium;
+      border-radius: $radius-md;
+      color: $text-secondary;
+      font-size: $font-size-sm;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all $transition-fast;
+
+      &:hover:not(:disabled) {
+        border-color: $border-strong;
+        color: $text-primary;
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+
+    .btn-save {
+      display: flex;
+      align-items: center;
+      gap: $space-xs;
+      padding: $space-sm $space-lg;
+      background: $accent-indigo;
+      border: none;
+      border-radius: $radius-md;
+      color: white;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all $transition-fast;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      .spinner-sm {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(white, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s infinite linear;
+      }
+
+      &:hover:not(:disabled) {
+        background: $accent-indigo-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($accent-indigo, 0.35);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+    }
+  }
+}
+
 .income-list {
   display: flex;
   flex-direction: column;
@@ -618,6 +870,38 @@ body.light-theme {
     color: $text-secondary;
     transition: color $transition-fast;
   }
+
+  .btn-delete-income {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    border-radius: $radius-sm;
+    color: $text-muted;
+    cursor: pointer;
+    opacity: 0;
+    transition: all $transition-fast;
+    padding: 0;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      background: rgba($accent-rose, 0.12);
+      color: $accent-rose;
+    }
+  }
+
+  &:hover .btn-delete-income {
+    opacity: 1;
+  }
 }
 
 .not-applicable-alert {
@@ -651,10 +935,21 @@ body.light-theme {
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 body.light-theme {
   .income-item {
     background: rgba(0, 0, 0, 0.02);
-    
+
     &:hover {
       background: rgba(0, 0, 0, 0.04);
     }
@@ -666,5 +961,18 @@ body.light-theme {
 
   .not-applicable-alert {
     background: rgba($accent-cyan, 0.03);
+  }
+
+  .quick-add-form {
+    background: rgba($accent-indigo, 0.04);
+    border-color: rgba($accent-indigo, 0.15);
+  }
+
+  .btn-add-income {
+    background: rgba($accent-indigo, 0.08);
+
+    &:hover {
+      background: rgba($accent-indigo, 0.15);
+    }
   }
 }

@@ -8,6 +8,13 @@
     <div class="table-wrapper glass">
       <ag-grid-angular [theme]="gridTheme" [rowData]="filteredIncomes()" [columnDefs]="colDefs"
         [defaultColDef]="defaultColDef" [animateRows]="true" style="height:480px;width:100%;" />
+      <div class="grid-footer">
+        <div class="count-badge">
+          <mat-icon>layers</mat-icon>
+          <span class="count-value">{{ filteredIncomes().length }}</span>
+          <span class="count-label">Source{{ filteredIncomes().length === 1 ? '' : 's' }}</span>
+        </div>
+      </div>
     </div>
     @if (showForm()) {
     <app-income-form [item]="editingItem()" [saving]="saving()" (save)="onSave($event)" (cancel)="cancelForm()" />
